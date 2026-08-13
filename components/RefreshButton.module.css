@@ -1,0 +1,31 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform var(--dur-micro) var(--ease-bounce),
+    box-shadow var(--dur-micro) var(--ease-bounce);
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--sh-1);
+}
+.btn:active {
+  transform: translateY(0);
+}
+
+.spinning {
+  animation: spin 700ms linear;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

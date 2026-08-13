@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import SearchBar from "./SearchBar";
+import RefreshButton from "./RefreshButton";
 import styles from "./Header.module.css";
 
 export default function Header() {
@@ -16,6 +17,7 @@ export default function Header() {
             <SearchBar />
           </Suspense>
         </div>
+        <RefreshButton />
       </div>
     </header>
   );

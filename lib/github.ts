@@ -1,7 +1,9 @@
 import type { ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 
-const REVALIDATE_SECONDS = 3600;
+// Fallback TTL — the GitHub webhook (app/api/revalidate) triggers instant
+// revalidation on push, this just bounds staleness if that ever misfires.
+const REVALIDATE_SECONDS = 600;
 const HIDDEN_FILES = new Set([".gitkeep"]);
 
 function authHeaders(): Record<string, string> {
