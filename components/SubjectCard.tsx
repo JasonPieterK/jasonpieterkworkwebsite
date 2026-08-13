@@ -12,8 +12,8 @@ import {
   Scales,
   PaintBrush,
   Desktop,
-  type Icon as PhosphorIcon,
 } from "@phosphor-icons/react/dist/ssr";
+import type { Icon as PhosphorIcon } from "@phosphor-icons/react/dist/lib/types";
 import type { Subject } from "@/lib/types";
 import {
   cardBgForIndex,
