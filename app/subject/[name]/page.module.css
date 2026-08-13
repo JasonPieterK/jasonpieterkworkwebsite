@@ -1,0 +1,26 @@
+.back {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--median);
+  margin-top: var(--s-4);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  padding: var(--s-7) 0 var(--s-5);
+}
+
+.title {
+  font-family: var(--font-hero);
+  font-weight: 400;
+  font-size: clamp(44px, 7vw, 80px);
+  line-height: 0.95;
+  animation: rise-in var(--dur-big) var(--ease-bounce) backwards;
+}

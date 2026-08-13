@@ -1,0 +1,18 @@
+.hint {
+  color: var(--ash);
+  font-style: italic;
+  padding: var(--s-6) 0;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-4);
+}
+
+.crumb {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  margin-bottom: var(--s-1);
+}

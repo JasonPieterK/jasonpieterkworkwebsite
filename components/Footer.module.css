@@ -1,0 +1,17 @@
+.footer {
+  border-top: var(--bw-thin) solid var(--bone);
+  padding: var(--s-5);
+  text-align: center;
+  color: var(--ash);
+  font-size: var(--fs-small);
+  margin-top: auto;
+}
+
+.footer p {
+  max-width: none;
+  margin: 0 auto;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}

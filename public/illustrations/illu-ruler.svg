@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" fill="none">
+  
+  <g transform="translate(8 70) rotate(-6)">
+    <rect x="0" y="0" width="220" height="48" rx="6" fill="#FFC93C" stroke="#0D0A2C" stroke-width="3"></rect>
+    
+    <g stroke="#0D0A2C" stroke-width="2" stroke-linecap="round">
+      <line x1="20" y1="0" x2="20" y2="18"></line>
+      <line x1="40" y1="0" x2="40" y2="12"></line>
+      <line x1="60" y1="0" x2="60" y2="18"></line>
+      <line x1="80" y1="0" x2="80" y2="12"></line>
+      <line x1="100" y1="0" x2="100" y2="22"></line>
+      <line x1="120" y1="0" x2="120" y2="12"></line>
+      <line x1="140" y1="0" x2="140" y2="18"></line>
+      <line x1="160" y1="0" x2="160" y2="12"></line>
+      <line x1="180" y1="0" x2="180" y2="18"></line>
+      <line x1="200" y1="0" x2="200" y2="12"></line>
+    </g>
+    <g font-family="JetBrains Mono, monospace" font-size="11" fill="#0D0A2C" font-weight="700">
+      <text x="20" y="40" text-anchor="middle">1</text>
+      <text x="60" y="40" text-anchor="middle">3</text>
+      <text x="100" y="40" text-anchor="middle">5</text>
+      <text x="140" y="40" text-anchor="middle">7</text>
+      <text x="180" y="40" text-anchor="middle">9</text>
+    </g>
+  </g>
+  
+  <g transform="translate(40 30) rotate(20)">
+    <rect x="0" y="0" width="120" height="14" fill="#FF3D8A" stroke="#0D0A2C" stroke-width="2.5"></rect>
+    <polygon points="120,0 140,7 120,14" fill="#FFF1D6" stroke="#0D0A2C" stroke-width="2.5"></polygon>
+    <polygon points="135,3 140,7 135,11" fill="#0D0A2C"></polygon>
+    <rect x="-22" y="0" width="22" height="14" fill="#2D7FF9" stroke="#0D0A2C" stroke-width="2.5"></rect>
+  </g>
+</svg>

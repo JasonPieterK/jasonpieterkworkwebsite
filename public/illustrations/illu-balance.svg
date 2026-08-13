@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 200" fill="none">
+  
+  <g stroke="#0D0A2C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <line x1="130" y1="30" x2="130" y2="170"></line>
+    <line x1="40" y1="60" x2="220" y2="60"></line>
+    <line x1="40" y1="60" x2="20" y2="100"></line>
+    <line x1="40" y1="60" x2="60" y2="100"></line>
+    <line x1="220" y1="60" x2="200" y2="100"></line>
+    <line x1="220" y1="60" x2="240" y2="100"></line>
+    <rect x="10" y="100" width="60" height="30" rx="6" fill="#FF3D8A"></rect>
+    <rect x="190" y="100" width="60" height="30" rx="6" fill="#2D7FF9"></rect>
+    <line x1="100" y1="170" x2="160" y2="170"></line>
+    <circle cx="130" cy="30" r="6" fill="#0D0A2C"></circle>
+  </g>
+  <g font-family="Unbounded, sans-serif" font-weight="800" font-size="22" fill="#FFF8EA">
+    <text x="22" y="122">X</text>
+    <text x="202" y="122">µ</text>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 220" fill="none">
+  
+  <g stroke="#0D0A2C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    
+    <line x1="20" y1="180" x2="300" y2="180"></line>
+    
+    <path d="M30 178 Q 90 178 130 100 T 160 50 Q 175 28 190 50 T 230 100 Q 270 178 310 178" fill="#FFF1D6"></path>
+    
+    <line x1="160" y1="52" x2="160" y2="180" stroke-dasharray="6 6" opacity="0.6"></line>
+  </g>
+  
+  <circle cx="110" cy="120" r="10" fill="#FF3D8A" stroke="#0D0A2C" stroke-width="3"></circle>
+  <circle cx="160" cy="50" r="10" fill="#2D7FF9" stroke="#0D0A2C" stroke-width="3"></circle>
+  <circle cx="210" cy="120" r="10" fill="#B8E22B" stroke="#0D0A2C" stroke-width="3"></circle>
+  
+  <g font-family="Caveat, cursive" font-weight="700" font-size="22" fill="#0D0A2C">
+    <text x="76" y="148" fill="#FF3D8A">mean</text>
+    <text x="142" y="36" fill="#2D7FF9">median</text>
+    <text x="200" y="148" fill="#0D0A2C">mode</text>
+  </g>
+</svg>

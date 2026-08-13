@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 160" fill="none">
+  
+  <g stroke="#0D0A2C" stroke-width="6" stroke-linecap="round">
+    
+    <g stroke="#FF3D8A">
+      <line x1="20" y1="30" x2="20" y2="110"></line>
+      <line x1="36" y1="30" x2="36" y2="110"></line>
+      <line x1="52" y1="30" x2="52" y2="110"></line>
+      <line x1="68" y1="30" x2="68" y2="110"></line>
+      <line x1="12" y1="100" x2="76" y2="40"></line>
+    </g>
+    
+    <g stroke="#2D7FF9">
+      <line x1="104" y1="30" x2="104" y2="110"></line>
+      <line x1="120" y1="30" x2="120" y2="110"></line>
+      <line x1="136" y1="30" x2="136" y2="110"></line>
+      <line x1="152" y1="30" x2="152" y2="110"></line>
+      <line x1="96" y1="100" x2="160" y2="40"></line>
+    </g>
+    
+    <g stroke="#B8E22B">
+      <line x1="188" y1="30" x2="188" y2="110"></line>
+      <line x1="204" y1="30" x2="204" y2="110"></line>
+      <line x1="220" y1="30" x2="220" y2="110"></line>
+    </g>
+  </g>
+  
+  <g font-family="Unbounded, sans-serif" font-weight="800" font-size="20" fill="#0D0A2C">
+    <text x="44" y="145" text-anchor="middle">5</text>
+    <text x="128" y="145" text-anchor="middle">5</text>
+    <text x="204" y="145" text-anchor="middle">3</text>
+  </g>
+</svg>

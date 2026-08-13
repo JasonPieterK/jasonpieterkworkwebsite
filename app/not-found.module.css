@@ -1,0 +1,30 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding-top: var(--s-9);
+  gap: var(--s-4);
+}
+
+.illu {
+  width: 96px;
+  height: 96px;
+  animation: card-spin 700ms var(--ease-bounce);
+}
+
+@keyframes card-spin {
+  from {
+    opacity: 0;
+    transform: scale(0.6) rotate(-20deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.text {
+  color: var(--ash);
+  font-size: 18px;
+}

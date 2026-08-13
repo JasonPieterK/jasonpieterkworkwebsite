@@ -1,0 +1,72 @@
+.card {
+  position: relative;
+  display: block;
+  background: var(--bg-1);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-2);
+  padding: var(--s-5);
+  color: var(--ink);
+  transform: rotate(var(--rot));
+  transition: transform var(--dur-std) var(--ease-bounce),
+    box-shadow var(--dur-std) var(--ease-bounce);
+  animation: card-rise var(--dur-big) var(--ease-bounce) backwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+.card:hover {
+  transform: rotate(0deg) translateY(-2px);
+  box-shadow: var(--sh-3);
+  text-decoration: none;
+}
+
+@keyframes card-rise {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97) rotate(var(--rot));
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(var(--rot));
+  }
+}
+
+.mean { background: var(--mean); color: var(--paper); }
+.median { background: var(--median); color: var(--paper); }
+.mode { background: var(--mode); color: var(--ink); }
+.quartile { background: var(--quartile); color: var(--paper); }
+
+.mean .count, .median .count, .quartile .count { color: var(--paper); opacity: 0.75; }
+.mode .count { color: var(--ink); opacity: 0.7; }
+
+.badge {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  background: var(--mode);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-pill);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 12px;
+  padding: 4px 12px;
+  transform: rotate(6deg);
+  box-shadow: var(--sh-1);
+}
+
+.illu {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--s-3);
+}
+
+.name {
+  font-size: var(--fs-h4);
+  margin-bottom: var(--s-1);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--ash);
+  margin: 0;
+}

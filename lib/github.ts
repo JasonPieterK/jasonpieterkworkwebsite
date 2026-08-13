@@ -1,0 +1,183 @@
+import type { FileEntry, GithubTreeItem, Subject } from "./types";
+import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
+
+const REVALIDATE_SECONDS = 3600;
+const HIDDEN_FILES = new Set([".gitkeep"]);
+
+function authHeaders(): Record<string, string> {
+  const token = process.env.GITHUB_TOKEN;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+class RateLimitError extends Error {}
+
+async function ghFetch<T>(url: string): Promise<T> {
+  const res = await fetch(url, {
+    headers: {
+      Accept: "application/vnd.github+json",
+      ...authHeaders(),
+    },
+    next: { revalidate: REVALIDATE_SECONDS },
+  });
+  if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0") {
+    throw new RateLimitError(`GitHub API rate limit hit for ${url}`);
+  }
+  if (!res.ok) {
+    throw new Error(`GitHub API ${res.status} for ${url}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+type CommitListItem = {
+  sha: string;
+  commit: { message: string; author: { date: string; name: string } };
+};
+
+type CommitDetail = CommitListItem & {
+  files?: { filename: string }[];
+};
+
+async function fetchTree(): Promise<GithubTreeItem[]> {
+  const data = await ghFetch<{ tree: GithubTreeItem[]; truncated: boolean }>(
+    `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`
+  );
+  return data.tree.filter((t) => t.path.startsWith(ROOT_PREFIX));
+}
+
+type FileCommitInfo = { date: string; message: string; sha: string };
+
+// Walks commits newest-first, stopping early once every known file path has
+// been resolved or the GitHub rate limit is hit — partial results still render.
+async function fetchLastCommitPerFile(
+  knownPaths: Set<string>
+): Promise<{ map: Map<string, FileCommitInfo>; latestSha: string | null }> {
+  let commits: CommitListItem[];
+  try {
+    commits = await ghFetch<CommitListItem[]>(
+      `https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=100`
+    );
+  } catch {
+    return { map: new Map(), latestSha: null };
+  }
+
+  const map = new Map<string, FileCommitInfo>();
+  const latestSha = commits[0]?.sha ?? null;
+
+  for (const c of commits) {
+    if (map.size >= knownPaths.size) break;
+    try {
+      const detail = await ghFetch<CommitDetail>(
+        `https://api.github.com/repos/${OWNER}/${REPO}/commits/${c.sha}`
+      );
+      const date = detail.commit.author.date;
+      const message = detail.commit.message.split("\n")[0];
+      for (const f of detail.files ?? []) {
+        if (!map.has(f.filename)) {
+          map.set(f.filename, { date, message, sha: c.sha });
+        }
+      }
+    } catch (err) {
+      if (err instanceof RateLimitError) break;
+      // one bad commit lookup shouldn't take down the whole page
+    }
+  }
+
+  return { map, latestSha };
+}
+
+function subjectSlug(name: string): string {
+  return name.toLowerCase().replace(/\s+/g, "-");
+}
+
+export async function getSubjects(): Promise<Subject[]> {
+  let tree: GithubTreeItem[];
+  try {
+    tree = await fetchTree();
+  } catch (err) {
+    console.error("Failed to load repo tree", err);
+    return [];
+  }
+  const blobPaths = new Set(tree.filter((t) => t.type === "blob").map((t) => t.path));
+  const { map: commitMap, latestSha } = await fetchLastCommitPerFile(blobPaths);
+
+  const subjectMap = new Map<string, Subject>();
+
+  function getSubjectEntry(subjectName: string): Subject {
+    const slug = subjectSlug(subjectName);
+    if (!subjectMap.has(slug)) {
+      subjectMap.set(slug, { slug, name: subjectName, semesters: [], fileCount: 0, newCount: 0 });
+    }
+    return subjectMap.get(slug)!;
+  }
+
+  function getSemesterGroup(subject: Subject, semesterName: string) {
+    let group = subject.semesters.find((s) => s.semester === semesterName);
+    if (!group) {
+      group = { semester: semesterName, files: [] };
+      subject.semesters.push(group);
+    }
+    return group;
+  }
+
+  // First pass: register every subject/semester folder so empty ones still show up.
+  for (const item of tree) {
+    if (item.type !== "tree") continue;
+    const relative = item.path.slice(ROOT_PREFIX.length);
+    const parts = relative.split("/").filter(Boolean);
+    if (parts.length === 0 || parts.length > 2) continue;
+
+    const [subjectName, semesterName] = parts;
+    const subject = getSubjectEntry(subjectName);
+    if (parts.length === 2) {
+      getSemesterGroup(subject, semesterName);
+    }
+  }
+
+  // Second pass: attach visible files.
+  for (const item of tree) {
+    if (item.type !== "blob") continue;
+    const relative = item.path.slice(ROOT_PREFIX.length);
+    const parts = relative.split("/");
+    if (parts.length < 3) continue; // expect SUBJECT/SEMESTER X/file...
+
+    const fileName = parts[parts.length - 1];
+    if (HIDDEN_FILES.has(fileName)) continue;
+
+    const [subjectName, semesterName] = parts;
+    const subject = getSubjectEntry(subjectName);
+
+    const commitInfo = commitMap.get(item.path);
+    const lastCommitDate = commitInfo?.date ?? "";
+    const isNew = Boolean(commitInfo && latestSha && commitInfo.sha === latestSha);
+
+    const entry: FileEntry = {
+      path: item.path,
+      name: fileName,
+      downloadUrl: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURI(item.path)}`,
+      htmlUrl: `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${encodeURI(item.path)}`,
+      lastCommitDate,
+      lastCommitMessage: commitInfo?.message ?? "",
+      isNew,
+    };
+
+    const semGroup = getSemesterGroup(subject, semesterName);
+    semGroup.files.push(entry);
+    subject.fileCount += 1;
+    if (isNew) subject.newCount += 1;
+  }
+
+  const subjects = Array.from(subjectMap.values());
+  for (const s of subjects) {
+    s.semesters.sort((a, b) => a.semester.localeCompare(b.semester));
+    for (const g of s.semesters) {
+      g.files.sort((a, b) => b.lastCommitDate.localeCompare(a.lastCommitDate));
+    }
+  }
+  subjects.sort((a, b) => a.name.localeCompare(b.name));
+  return subjects;
+}
+
+export async function getSubject(slug: string): Promise<Subject | undefined> {
+  const subjects = await getSubjects();
+  return subjects.find((s) => s.slug === slug);
+}

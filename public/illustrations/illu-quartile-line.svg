@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 180" fill="none">
+  
+  <g stroke="#0D0A2C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="20" y1="100" x2="220" y2="100"></line>
+    
+    <line x1="70" y1="80" x2="70" y2="120" stroke="#FFC93C" stroke-width="6"></line>
+    <line x1="120" y1="64" x2="120" y2="136" stroke="#2D7FF9" stroke-width="6"></line>
+    <line x1="170" y1="80" x2="170" y2="120" stroke="#FF6B4A" stroke-width="6"></line>
+    
+    <rect x="22" y="140" width="46" height="24" rx="4" fill="#6B3FA0" opacity="0.18"></rect>
+    <rect x="74" y="140" width="44" height="24" rx="4" fill="#6B3FA0" opacity="0.32"></rect>
+    <rect x="124" y="140" width="44" height="24" rx="4" fill="#6B3FA0" opacity="0.5"></rect>
+    <rect x="174" y="140" width="44" height="24" rx="4" fill="#6B3FA0" opacity="0.7"></rect>
+  </g>
+  
+  <g font-family="JetBrains Mono, monospace" font-size="12" fill="#0D0A2C" font-weight="700">
+    <text x="45" y="157" text-anchor="middle" fill="#FDFCF7">25%</text>
+    <text x="96" y="157" text-anchor="middle" fill="#FDFCF7">25%</text>
+    <text x="146" y="157" text-anchor="middle" fill="#FDFCF7">25%</text>
+    <text x="196" y="157" text-anchor="middle" fill="#FDFCF7">25%</text>
+  </g>
+  
+  <g font-family="Caveat, cursive" font-weight="700" font-size="22">
+    <text x="70" y="60" fill="#FFC93C" stroke="#0D0A2C" stroke-width="0.4" text-anchor="middle">Q1</text>
+    <text x="120" y="48" fill="#2D7FF9" stroke="#0D0A2C" stroke-width="0.4" text-anchor="middle">Q2</text>
+    <text x="170" y="60" fill="#FF6B4A" stroke="#0D0A2C" stroke-width="0.4" text-anchor="middle">Q3</text>
+  </g>
+</svg>
