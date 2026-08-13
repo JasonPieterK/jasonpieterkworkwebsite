@@ -28,4 +28,5 @@ export type Subject = {
   semesters: SemesterGroup[];
   fileCount: number;
   newCount: number;
+  newFileNames: string[];
 };

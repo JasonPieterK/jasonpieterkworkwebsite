@@ -105,7 +105,7 @@ export async function getSubjects(): Promise<Subject[]> {
   function getSubjectEntry(subjectName: string): Subject {
     const slug = subjectSlug(subjectName);
     if (!subjectMap.has(slug)) {
-      subjectMap.set(slug, { slug, name: subjectName, semesters: [], fileCount: 0, newCount: 0 });
+      subjectMap.set(slug, { slug, name: subjectName, semesters: [], fileCount: 0, newCount: 0, newFileNames: [] });
     }
     return subjectMap.get(slug)!;
   }
@@ -163,7 +163,10 @@ export async function getSubjects(): Promise<Subject[]> {
     const semGroup = getSemesterGroup(subject, semesterName);
     semGroup.files.push(entry);
     subject.fileCount += 1;
-    if (isNew) subject.newCount += 1;
+    if (isNew) {
+      subject.newCount += 1;
+      subject.newFileNames.push(fileName);
+    }
   }
 
   const subjects = Array.from(subjectMap.values());
