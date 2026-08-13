@@ -1,7 +1,6 @@
 .card {
   position: relative;
   display: block;
-  background: var(--bg-1);
   border: var(--bw) solid var(--ink);
   border-radius: var(--r-lg);
   box-shadow: var(--sh-2);
@@ -30,13 +29,8 @@
   }
 }
 
-.mean { background: var(--mean); color: var(--paper); }
-.median { background: var(--median); color: var(--paper); }
-.mode { background: var(--mode); color: var(--ink); }
-.quartile { background: var(--quartile); color: var(--paper); }
-
-.mean .count, .median .count, .quartile .count { color: var(--paper); opacity: 0.75; }
-.mode .count { color: var(--ink); opacity: 0.7; }
+.paper { background: var(--paper); }
+.cream { background: var(--cream); }
 
 .badge {
   position: absolute;
@@ -53,11 +47,21 @@
   box-shadow: var(--sh-1);
 }
 
-.illu {
-  width: 56px;
-  height: 56px;
+.iconBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-md);
+  border: var(--bw-thin) solid var(--ink);
   margin-bottom: var(--s-3);
 }
+
+.mean { background: var(--mean); }
+.median { background: var(--median); }
+.mode { background: var(--mode); }
+.quartile { background: var(--quartile); }
 
 .name {
   font-size: var(--fs-h4);
