@@ -5,6 +5,8 @@ import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 // revalidation on push, this just bounds staleness if that ever misfires.
 const REVALIDATE_SECONDS = 600;
 const HIDDEN_FILES = new Set([".gitkeep"]);
+// New/Updated badges expire once their commit is more than this many commits behind HEAD (repo-wide).
+const BADGE_COMMIT_WINDOW = 3;
 
 function authHeaders(): Record<string, string> {
   const token = process.env.GITHUB_TOKEN;
@@ -50,12 +52,13 @@ async function fetchTree(): Promise<GithubTreeItem[]> {
   return data.tree.filter((t) => t.path.startsWith(ROOT_PREFIX));
 }
 
-type FileCommitInfo = { date: string; message: string; changeKind: ChangeKind };
+type FileCommitInfo = { date: string; message: string; changeKind: ChangeKind; commitIndex: number };
 
 // Walks commits newest-first, stopping early once every known file path has
 // been resolved or the GitHub rate limit is hit — partial results still render.
 // First occurrence per file (in newest-first order) is that file's most recent
 // action — its own change history further back doesn't matter for "what happened last."
+// commitIndex is that commit's distance from HEAD (0 = latest), used to expire badges.
 async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<string, FileCommitInfo>> {
   let commits: CommitListItem[];
   try {
@@ -68,8 +71,9 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
 
   const map = new Map<string, FileCommitInfo>();
 
-  for (const c of commits) {
+  for (let i = 0; i < commits.length; i++) {
     if (map.size >= knownPaths.size) break;
+    const c = commits[i];
     try {
       const detail = await ghFetch<CommitDetail>(
         `https://api.github.com/repos/${OWNER}/${REPO}/commits/${c.sha}`
@@ -78,7 +82,7 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
       const message = detail.commit.message.split("\n")[0];
       for (const f of detail.files ?? []) {
         if (!map.has(f.filename)) {
-          map.set(f.filename, { date, message, changeKind: toChangeKind(f.status) });
+          map.set(f.filename, { date, message, changeKind: toChangeKind(f.status), commitIndex: i });
         }
       }
     } catch (err) {
@@ -175,7 +179,8 @@ export async function getSubjects(): Promise<Subject[]> {
     semGroup.files.push(entry);
     subject.fileCount += 1;
 
-    if (lastCommitDate) {
+    const withinBadgeWindow = Boolean(commitInfo && commitInfo.commitIndex < BADGE_COMMIT_WINDOW);
+    if (lastCommitDate && withinBadgeWindow) {
       const slot = entry.changeKind === "added" ? "newestAdded" : "newestUpdated";
       if (!subject[slot] || lastCommitDate > subject[slot]!.lastCommitDate) {
         subject[slot] = entry;
