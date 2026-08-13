@@ -33,21 +33,26 @@
 .paper { background: var(--paper); }
 .cream { background: var(--cream); }
 
-.newBanner {
+.banners {
+  display: block;
+  margin: calc(var(--s-5) * -1) calc(var(--s-5) * -1) var(--s-4);
+}
+
+.banner {
   display: flex;
   align-items: baseline;
   gap: 5px;
-  margin: calc(var(--s-5) * -1) calc(var(--s-5) * -1) var(--s-4);
   padding: 5px var(--s-4);
-  background: var(--mode);
-  color: var(--ink);
   border-bottom: var(--bw-thin) solid var(--ink);
   font-family: var(--font-mono);
   font-size: 11px;
   overflow: hidden;
 }
 
-.newBanner strong {
+.bannerNew { background: var(--mode); color: var(--ink); }
+.bannerUpdate { background: var(--sun); color: var(--ink); }
+
+.banner strong {
   flex-shrink: 0;
   font-family: var(--font-display);
   font-weight: 800;
@@ -56,15 +61,10 @@
   text-transform: uppercase;
 }
 
-.newFile {
+.bannerFile {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-}
-
-.newMore {
-  flex-shrink: 0;
-  opacity: 0.7;
 }
 
 .iconBadge {

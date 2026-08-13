@@ -1,4 +1,4 @@
-import type { FileEntry, GithubTreeItem, Subject } from "./types";
+import type { ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 
 const REVALIDATE_SECONDS = 3600;
@@ -34,8 +34,12 @@ type CommitListItem = {
 };
 
 type CommitDetail = CommitListItem & {
-  files?: { filename: string }[];
+  files?: { filename: string; status: string }[];
 };
+
+function toChangeKind(status: string): ChangeKind {
+  return status === "added" ? "added" : "modified";
+}
 
 async function fetchTree(): Promise<GithubTreeItem[]> {
   const data = await ghFetch<{ tree: GithubTreeItem[]; truncated: boolean }>(
@@ -44,24 +48,23 @@ async function fetchTree(): Promise<GithubTreeItem[]> {
   return data.tree.filter((t) => t.path.startsWith(ROOT_PREFIX));
 }
 
-type FileCommitInfo = { date: string; message: string; sha: string };
+type FileCommitInfo = { date: string; message: string; changeKind: ChangeKind };
 
 // Walks commits newest-first, stopping early once every known file path has
 // been resolved or the GitHub rate limit is hit — partial results still render.
-async function fetchLastCommitPerFile(
-  knownPaths: Set<string>
-): Promise<{ map: Map<string, FileCommitInfo>; latestSha: string | null }> {
+// First occurrence per file (in newest-first order) is that file's most recent
+// action — its own change history further back doesn't matter for "what happened last."
+async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<string, FileCommitInfo>> {
   let commits: CommitListItem[];
   try {
     commits = await ghFetch<CommitListItem[]>(
       `https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=100`
     );
   } catch {
-    return { map: new Map(), latestSha: null };
+    return new Map();
   }
 
   const map = new Map<string, FileCommitInfo>();
-  const latestSha = commits[0]?.sha ?? null;
 
   for (const c of commits) {
     if (map.size >= knownPaths.size) break;
@@ -73,7 +76,7 @@ async function fetchLastCommitPerFile(
       const message = detail.commit.message.split("\n")[0];
       for (const f of detail.files ?? []) {
         if (!map.has(f.filename)) {
-          map.set(f.filename, { date, message, sha: c.sha });
+          map.set(f.filename, { date, message, changeKind: toChangeKind(f.status) });
         }
       }
     } catch (err) {
@@ -82,7 +85,7 @@ async function fetchLastCommitPerFile(
     }
   }
 
-  return { map, latestSha };
+  return map;
 }
 
 function subjectSlug(name: string): string {
@@ -98,14 +101,21 @@ export async function getSubjects(): Promise<Subject[]> {
     return [];
   }
   const blobPaths = new Set(tree.filter((t) => t.type === "blob").map((t) => t.path));
-  const { map: commitMap, latestSha } = await fetchLastCommitPerFile(blobPaths);
+  const commitMap = await fetchLastCommitPerFile(blobPaths);
 
   const subjectMap = new Map<string, Subject>();
 
   function getSubjectEntry(subjectName: string): Subject {
     const slug = subjectSlug(subjectName);
     if (!subjectMap.has(slug)) {
-      subjectMap.set(slug, { slug, name: subjectName, semesters: [], fileCount: 0, newCount: 0, newFileNames: [] });
+      subjectMap.set(slug, {
+        slug,
+        name: subjectName,
+        semesters: [],
+        fileCount: 0,
+        newestAdded: null,
+        newestUpdated: null,
+      });
     }
     return subjectMap.get(slug)!;
   }
@@ -148,7 +158,6 @@ export async function getSubjects(): Promise<Subject[]> {
 
     const commitInfo = commitMap.get(item.path);
     const lastCommitDate = commitInfo?.date ?? "";
-    const isNew = Boolean(commitInfo && latestSha && commitInfo.sha === latestSha);
 
     const entry: FileEntry = {
       path: item.path,
@@ -157,15 +166,18 @@ export async function getSubjects(): Promise<Subject[]> {
       htmlUrl: `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${encodeURI(item.path)}`,
       lastCommitDate,
       lastCommitMessage: commitInfo?.message ?? "",
-      isNew,
+      changeKind: commitInfo?.changeKind ?? "modified",
     };
 
     const semGroup = getSemesterGroup(subject, semesterName);
     semGroup.files.push(entry);
     subject.fileCount += 1;
-    if (isNew) {
-      subject.newCount += 1;
-      subject.newFileNames.push(fileName);
+
+    if (lastCommitDate) {
+      const slot = entry.changeKind === "added" ? "newestAdded" : "newestUpdated";
+      if (!subject[slot] || lastCommitDate > subject[slot]!.lastCommitDate) {
+        subject[slot] = entry;
+      }
     }
   }
 

@@ -7,6 +7,8 @@ export type GithubTreeItem = {
   url: string;
 };
 
+export type ChangeKind = "added" | "modified";
+
 export type FileEntry = {
   path: string;
   name: string;
@@ -14,7 +16,7 @@ export type FileEntry = {
   htmlUrl: string;
   lastCommitDate: string;
   lastCommitMessage: string;
-  isNew: boolean;
+  changeKind: ChangeKind;
 };
 
 export type SemesterGroup = {
@@ -27,6 +29,6 @@ export type Subject = {
   name: string;
   semesters: SemesterGroup[];
   fileCount: number;
-  newCount: number;
-  newFileNames: string[];
+  newestAdded: FileEntry | null;
+  newestUpdated: FileEntry | null;
 };

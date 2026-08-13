@@ -9,7 +9,6 @@ export default function FileCard({ file, index = 0 }: { file: FileEntry; index?:
 
   return (
     <div className={styles.card} style={{ "--i": index } as CSSProperties}>
-      {file.isNew && <span className={styles.badge}>New</span>}
       <p className={styles.name}>{file.name}</p>
       {file.lastCommitMessage && <p className={styles.note}>{file.lastCommitMessage}</p>}
       <div className={styles.meta}>

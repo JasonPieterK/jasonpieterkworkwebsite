@@ -51,12 +51,19 @@ export default function SubjectCard({ subject, index }: { subject: Subject; inde
       className={`${styles.card} ${styles[bg]}`}
       style={{ "--rot": rotationForIndex(index), "--i": index } as React.CSSProperties}
     >
-      {subject.newFileNames.length > 0 && (
-        <span className={styles.newBanner}>
-          <strong>New</strong>
-          <span className={styles.newFile}>{subject.newFileNames[0]}</span>
-          {subject.newFileNames.length > 1 && (
-            <span className={styles.newMore}>+{subject.newFileNames.length - 1}</span>
+      {(subject.newestAdded || subject.newestUpdated) && (
+        <span className={styles.banners}>
+          {subject.newestAdded && (
+            <span className={`${styles.banner} ${styles.bannerNew}`}>
+              <strong>New</strong>
+              <span className={styles.bannerFile}>{subject.newestAdded.name}</span>
+            </span>
+          )}
+          {subject.newestUpdated && (
+            <span className={`${styles.banner} ${styles.bannerUpdate}`}>
+              <strong>Updated</strong>
+              <span className={styles.bannerFile}>{subject.newestUpdated.name}</span>
+            </span>
           )}
         </span>
       )}
