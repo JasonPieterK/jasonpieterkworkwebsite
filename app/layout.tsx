@@ -20,9 +20,24 @@ const jetbrainsMono = JetBrains_Mono({
   variable: "--font-mono-family",
 });
 
+const SITE_URL = "https://jasonpieterkwork.vercel.app";
+
 export const metadata: Metadata = {
-  title: "jasonpieterkwork",
-  description: "Grade 9.1 course materials, always up to date.",
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: "jasonpieterkwork — Grade 9.1 course materials",
+    template: "%s · jasonpieterkwork",
+  },
+  description:
+    "Grade 9.1 class materials by subject and semester — notes, worksheets, and assignments, synced live from GitHub.",
+  openGraph: {
+    title: "jasonpieterkwork — Grade 9.1 course materials",
+    description: "Grade 9.1 class materials by subject and semester, synced live from GitHub.",
+    url: SITE_URL,
+    siteName: "jasonpieterkwork",
+    type: "website",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
