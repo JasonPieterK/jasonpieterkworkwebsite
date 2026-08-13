@@ -8,9 +8,9 @@ export default function Header() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link href="/" className={styles.brand}>
+        <Link href="/" className={styles.brand} aria-label="jasonpieterkwork — home">
           <img src="/mark.svg" alt="" className={styles.mark} />
-          <span>jasonpieterkwork</span>
+          <span className={styles.brandText}>jasonpieterkwork</span>
         </Link>
         <div className={styles.searchWrap}>
           <Suspense fallback={null}>

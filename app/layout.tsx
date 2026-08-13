@@ -4,6 +4,7 @@ import "./mmm-tokens.css";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import PullToRefresh from "@/components/PullToRefresh";
 
 const bagel = Bagel_Fat_One({ weight: "400", subsets: ["latin"], variable: "--font-hero-family" });
 const unbounded = Unbounded({
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${bagel.variable} ${unbounded.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
     >
       <body>
+        <PullToRefresh />
         <Header />
         {children}
         <Footer />
