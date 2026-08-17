@@ -1,5 +1,6 @@
 .card {
   position: relative;
+  overflow: hidden;
   background: var(--bg-1);
   border: var(--bw-thin) solid var(--ink);
   border-radius: var(--r-md);
@@ -24,12 +25,20 @@
   word-break: break-word;
 }
 
-.note {
-  font-family: var(--font-hand);
-  font-size: 18px;
-  color: var(--ash);
-  margin: 0;
+.banner {
+  align-self: flex-start;
+  margin: calc(var(--s-4) * -1) calc(var(--s-4) * -1) 0;
+  padding: 4px var(--s-4);
+  border-bottom: var(--bw-thin) solid var(--ink);
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  width: calc(100% + var(--s-4) * 2);
 }
+.bannerNew { background: var(--mode); color: var(--ink); }
+.bannerUpdate { background: var(--sun); color: var(--ink); }
 
 .meta {
   display: flex;

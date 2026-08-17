@@ -52,7 +52,13 @@ async function fetchTree(): Promise<GithubTreeItem[]> {
   return data.tree.filter((t) => t.path.startsWith(ROOT_PREFIX));
 }
 
-type FileCommitInfo = { date: string; message: string; changeKind: ChangeKind; commitIndex: number };
+type FileCommitInfo = {
+  date: string;
+  firstDate: string;
+  message: string;
+  changeKind: ChangeKind;
+  commitIndex: number;
+};
 
 // Walks commits newest-first, stopping early once every known file path has
 // been resolved or the GitHub rate limit is hit — partial results still render.
@@ -81,8 +87,17 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
       const date = detail.commit.author.date;
       const message = detail.commit.message.split("\n")[0];
       for (const f of detail.files ?? []) {
-        if (!map.has(f.filename)) {
-          map.set(f.filename, { date, message, changeKind: toChangeKind(f.status), commitIndex: i });
+        const existing = map.get(f.filename);
+        if (!existing) {
+          map.set(f.filename, {
+            date,
+            firstDate: date,
+            message,
+            changeKind: toChangeKind(f.status),
+            commitIndex: i,
+          });
+        } else {
+          existing.firstDate = date; // this commit is older (walked newest-first)
         }
       }
     } catch (err) {
@@ -171,6 +186,7 @@ export async function getSubjects(): Promise<Subject[]> {
       downloadUrl: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURI(item.path)}`,
       htmlUrl: `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${encodeURI(item.path)}`,
       lastCommitDate,
+      firstCommitDate: commitInfo?.firstDate ?? lastCommitDate,
       lastCommitMessage: commitInfo?.message ?? "",
       changeKind: commitInfo?.changeKind ?? "modified",
     };

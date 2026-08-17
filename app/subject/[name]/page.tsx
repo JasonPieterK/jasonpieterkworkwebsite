@@ -26,7 +26,11 @@ export default async function SubjectPage(props: PageProps<"/subject/[name]">) {
           Open on GitHub to download all
         </a>
       </div>
-      <SemesterTabs semesters={subject.semesters} />
+      <SemesterTabs
+        semesters={subject.semesters}
+        newestAddedPath={subject.newestAdded?.path}
+        newestUpdatedPath={subject.newestUpdated?.path}
+      />
     </main>
   );
 }

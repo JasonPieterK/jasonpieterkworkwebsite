@@ -4,13 +4,25 @@ import { formatDate, relativeDate } from "@/lib/utils";
 import { getPreviewUrl } from "@/lib/preview";
 import styles from "./FileCard.module.css";
 
-export default function FileCard({ file, index = 0 }: { file: FileEntry; index?: number }) {
+export default function FileCard({
+  file,
+  index = 0,
+  banner,
+}: {
+  file: FileEntry;
+  index?: number;
+  banner?: "new" | "updated";
+}) {
   const previewUrl = getPreviewUrl(file);
 
   return (
     <div className={styles.card} style={{ "--i": index } as CSSProperties}>
+      {banner && (
+        <span className={`${styles.banner} ${banner === "new" ? styles.bannerNew : styles.bannerUpdate}`}>
+          {banner === "new" ? "New" : "Updated"}
+        </span>
+      )}
       <p className={styles.name}>{file.name}</p>
-      {file.lastCommitMessage && <p className={styles.note}>{file.lastCommitMessage}</p>}
       <div className={styles.meta}>
         <span className={styles.date} title={file.lastCommitDate}>
           {file.lastCommitDate ? `${formatDate(file.lastCommitDate)} · ${relativeDate(file.lastCommitDate)}` : "—"}

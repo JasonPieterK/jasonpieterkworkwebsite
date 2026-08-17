@@ -15,6 +15,7 @@ export type FileEntry = {
   downloadUrl: string;
   htmlUrl: string;
   lastCommitDate: string;
+  firstCommitDate: string;
   lastCommitMessage: string;
   changeKind: ChangeKind;
 };
