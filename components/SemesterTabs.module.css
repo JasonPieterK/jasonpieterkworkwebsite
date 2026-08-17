@@ -115,6 +115,11 @@
   word-break: break-word;
 }
 
+.listIcon {
+  flex-shrink: 0;
+  color: var(--median);
+}
+
 .listBadge {
   font-family: var(--font-display);
   font-weight: 800;

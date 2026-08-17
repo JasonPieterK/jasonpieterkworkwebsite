@@ -17,6 +17,18 @@
   box-shadow: var(--sh-2);
 }
 
+.nameRow {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+}
+
+.fileIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--median);
+}
+
 .name {
   font-family: var(--font-display);
   font-weight: 700;

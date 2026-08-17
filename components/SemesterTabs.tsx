@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import type { FileEntry, SemesterGroup } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { getPreviewUrl } from "@/lib/preview";
+import { fileIconFor } from "@/lib/fileIcon";
 import FileCard from "./FileCard";
 import styles from "./SemesterTabs.module.css";
 
@@ -127,9 +128,11 @@ export default function SemesterTabs({
                 const modified = f.lastCommitDate !== f.firstCommitDate ? formatDate(f.lastCommitDate) : "–";
                 const previewUrl = getPreviewUrl(f);
                 const banner = bannerFor(f);
+                const Icon = fileIconFor(f.name);
                 return (
                   <tr key={f.path}>
                     <td className={styles.listName}>
+                      <Icon size={18} weight="bold" className={styles.listIcon} aria-hidden="true" />
                       {f.name}
                       {banner && (
                         <span

@@ -2,6 +2,7 @@ import type { CSSProperties } from "react";
 import type { FileEntry } from "@/lib/types";
 import { formatDate, relativeDate } from "@/lib/utils";
 import { getPreviewUrl } from "@/lib/preview";
+import { fileIconFor } from "@/lib/fileIcon";
 import styles from "./FileCard.module.css";
 
 export default function FileCard({
@@ -14,6 +15,7 @@ export default function FileCard({
   banner?: "new" | "updated";
 }) {
   const previewUrl = getPreviewUrl(file);
+  const Icon = fileIconFor(file.name);
 
   return (
     <div className={styles.card} style={{ "--i": index } as CSSProperties}>
@@ -22,7 +24,10 @@ export default function FileCard({
           {banner === "new" ? "New" : "Updated"}
         </span>
       )}
-      <p className={styles.name}>{file.name}</p>
+      <div className={styles.nameRow}>
+        <Icon size={20} weight="bold" className={styles.fileIcon} aria-hidden="true" />
+        <p className={styles.name}>{file.name}</p>
+      </div>
       <div className={styles.meta}>
         <span className={styles.date} title={file.lastCommitDate}>
           {file.lastCommitDate ? `${formatDate(file.lastCommitDate)} · ${relativeDate(file.lastCommitDate)}` : "—"}
