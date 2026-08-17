@@ -9,7 +9,7 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.inner}>
         <Link href="/" className={styles.brand} aria-label="jasonpieterkwork — home">
-          <img src="/mark.svg" alt="" className={styles.mark} />
+          <img src="/mark.svg" alt="" width={32} height={32} className={styles.mark} />
           <span className={styles.brandText}>jasonpieterkwork</span>
         </Link>
         <div className={styles.searchWrap}>

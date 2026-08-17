@@ -8,16 +8,28 @@ import PullToRefresh from "@/components/PullToRefresh";
 
 const bagel = Bagel_Fat_One({ weight: "400", subsets: ["latin"], variable: "--font-hero-family" });
 const unbounded = Unbounded({
-  weight: ["400", "500", "700", "800", "900"],
+  weight: ["400", "500", "700", "800"],
   subsets: ["latin"],
   variable: "--font-display-family",
+  display: "swap",
 });
-const dmSans = DM_Sans({ weight: ["400", "500", "700"], subsets: ["latin"], variable: "--font-body-family" });
-const caveat = Caveat({ weight: ["400", "600", "700"], subsets: ["latin"], variable: "--font-hand-family" });
-const jetbrainsMono = JetBrains_Mono({
+const dmSans = DM_Sans({
   weight: ["400", "500", "700"],
   subsets: ["latin"],
+  variable: "--font-body-family",
+  display: "swap",
+});
+const caveat = Caveat({
+  weight: ["400", "700"],
+  subsets: ["latin"],
+  variable: "--font-hand-family",
+  display: "swap",
+});
+const jetbrainsMono = JetBrains_Mono({
+  weight: ["400", "500"],
+  subsets: ["latin"],
   variable: "--font-mono-family",
+  display: "swap",
 });
 
 const SITE_URL = "https://jasonpieterkwork.vercel.app";

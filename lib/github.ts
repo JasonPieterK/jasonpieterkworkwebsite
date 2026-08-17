@@ -76,14 +76,24 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
   }
 
   const map = new Map<string, FileCommitInfo>();
+  const BATCH_SIZE = 10; // fetch commit details concurrently in small batches —
+  // sequential awaits here made subject pages take 10+s on a cold cache.
 
-  for (let i = 0; i < commits.length; i++) {
+  for (let start = 0; start < commits.length; start += BATCH_SIZE) {
     if (map.size >= knownPaths.size) break;
-    const c = commits[i];
-    try {
-      const detail = await ghFetch<CommitDetail>(
-        `https://api.github.com/repos/${OWNER}/${REPO}/commits/${c.sha}`
-      );
+    const batch = commits.slice(start, start + BATCH_SIZE);
+    const results = await Promise.allSettled(
+      batch.map((c) => ghFetch<CommitDetail>(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${c.sha}`))
+    );
+
+    let hitRateLimit = false;
+    results.forEach((result, j) => {
+      const i = start + j;
+      if (result.status === "rejected") {
+        if (result.reason instanceof RateLimitError) hitRateLimit = true;
+        return; // one bad commit lookup shouldn't take down the whole page
+      }
+      const detail = result.value;
       const date = detail.commit.author.date;
       const message = detail.commit.message.split("\n")[0];
       for (const f of detail.files ?? []) {
@@ -100,10 +110,8 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
           existing.firstDate = date; // this commit is older (walked newest-first)
         }
       }
-    } catch (err) {
-      if (err instanceof RateLimitError) break;
-      // one bad commit lookup shouldn't take down the whole page
-    }
+    });
+    if (hitRateLimit) break;
   }
 
   return map;
