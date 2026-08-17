@@ -7,7 +7,7 @@ import { getPreviewUrl } from "@/lib/preview";
 import FileCard from "./FileCard";
 import styles from "./SemesterTabs.module.css";
 
-type StatusFilter = "all" | "added" | "modified";
+type StatusFilter = "all" | "new" | "updated";
 
 export default function SemesterTabs({
   semesters,
@@ -22,14 +22,10 @@ export default function SemesterTabs({
   const [view, setView] = useState<"grid" | "list">("grid");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
-  const [dateFrom, setDateFrom] = useState("");
-  const [dateTo, setDateTo] = useState("");
 
   function resetFilters() {
     setStatus("all");
     setQuery("");
-    setDateFrom("");
-    setDateTo("");
   }
 
   if (semesters.length === 0) {
@@ -37,21 +33,20 @@ export default function SemesterTabs({
   }
   const current = semesters[active];
 
-  const files = useMemo(() => {
-    return current.files.filter((f) => {
-      if (status !== "all" && f.changeKind !== status) return false;
-      if (query && !f.name.toLowerCase().includes(query.toLowerCase())) return false;
-      if (dateFrom && (!f.lastCommitDate || f.lastCommitDate < dateFrom)) return false;
-      if (dateTo && (!f.lastCommitDate || f.lastCommitDate > `${dateTo}T23:59:59`)) return false;
-      return true;
-    });
-  }, [current, status, query, dateFrom, dateTo]);
-
   function bannerFor(file: FileEntry): "new" | "updated" | undefined {
     if (file.path === newestAddedPath) return "new";
     if (file.path === newestUpdatedPath) return "updated";
     return undefined;
   }
+
+  const files = useMemo(() => {
+    return current.files.filter((f) => {
+      if (status !== "all" && bannerFor(f) !== status) return false;
+      if (query && !f.name.toLowerCase().includes(query.toLowerCase())) return false;
+      return true;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [current, status, query, newestAddedPath, newestUpdatedPath]);
 
   return (
     <div>
@@ -88,13 +83,13 @@ export default function SemesterTabs({
 
       <div className={styles.filters}>
         <div className={styles.statusPills}>
-          {(["all", "added", "modified"] as StatusFilter[]).map((s) => (
+          {(["all", "new", "updated"] as StatusFilter[]).map((s) => (
             <button
               key={s}
               className={`${styles.pill} ${status === s ? styles.pillActive : ""}`}
               onClick={() => setStatus(s)}
             >
-              {s === "all" ? "All" : s === "added" ? "New" : "Updated"}
+              {s === "all" ? "All" : s === "new" ? "New" : "Updated"}
             </button>
           ))}
         </div>
@@ -105,23 +100,6 @@ export default function SemesterTabs({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
-        <div className={styles.dateRange}>
-          <input
-            className={styles.dateInput}
-            type="date"
-            value={dateFrom}
-            onChange={(e) => setDateFrom(e.target.value)}
-            aria-label="From date"
-          />
-          <span className={styles.dateSep}>–</span>
-          <input
-            className={styles.dateInput}
-            type="date"
-            value={dateTo}
-            onChange={(e) => setDateTo(e.target.value)}
-            aria-label="To date"
-          />
-        </div>
       </div>
 
       {files.length === 0 ? (
@@ -133,46 +111,58 @@ export default function SemesterTabs({
           ))}
         </div>
       ) : (
-        <div className={styles.list} key={current.semester}>
-          <div className={styles.listHead}>
-            <span>Name</span>
-            <span>Release date</span>
-            <span>Date modified</span>
-            <span>Commit note</span>
-            <span />
-          </div>
-          {files.map((f) => {
-            const modified = f.lastCommitDate !== f.firstCommitDate ? formatDate(f.lastCommitDate) : "–";
-            const previewUrl = getPreviewUrl(f);
-            const banner = bannerFor(f);
-            return (
-              <div key={f.path} className={styles.listRow}>
-                <span className={styles.listName}>
-                  {f.name}
-                  {banner && (
-                    <span className={`${styles.listBadge} ${banner === "new" ? styles.badgeNew : styles.badgeUpdated}`}>
-                      {banner === "new" ? "New" : "Updated"}
-                    </span>
-                  )}
-                </span>
-                <span title={f.firstCommitDate}>
-                  {f.firstCommitDate ? formatDate(f.firstCommitDate) : "–"}
-                </span>
-                <span title={f.lastCommitDate}>{modified}</span>
-                <span className={styles.listNote}>{f.lastCommitMessage || "–"}</span>
-                <span className={styles.listActions}>
-                  {previewUrl && (
-                    <a href={previewUrl} target="_blank" rel="noreferrer" className="mmm-btn mmm-btn--ghost">
-                      Preview
-                    </a>
-                  )}
-                  <a href={f.downloadUrl} className="mmm-btn mmm-btn--ghost" download>
-                    Download
-                  </a>
-                </span>
-              </div>
-            );
-          })}
+        <div className={styles.listWrap} key={current.semester}>
+          <table className={styles.list}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Release date</th>
+                <th>Date modified</th>
+                <th>Commit note</th>
+                <th />
+              </tr>
+            </thead>
+            <tbody>
+              {files.map((f) => {
+                const modified = f.lastCommitDate !== f.firstCommitDate ? formatDate(f.lastCommitDate) : "–";
+                const previewUrl = getPreviewUrl(f);
+                const banner = bannerFor(f);
+                return (
+                  <tr key={f.path}>
+                    <td className={styles.listName}>
+                      {f.name}
+                      {banner && (
+                        <span
+                          className={`${styles.listBadge} ${banner === "new" ? styles.badgeNew : styles.badgeUpdated}`}
+                        >
+                          {banner === "new" ? "New" : "Updated"}
+                        </span>
+                      )}
+                    </td>
+                    <td data-label="Release date" title={f.firstCommitDate}>
+                      {f.firstCommitDate ? formatDate(f.firstCommitDate) : "–"}
+                    </td>
+                    <td data-label="Date modified" title={f.lastCommitDate}>
+                      {modified}
+                    </td>
+                    <td className={styles.listNote} data-label="Commit note">
+                      {f.lastCommitMessage || "–"}
+                    </td>
+                    <td className={styles.listActions}>
+                      {previewUrl && (
+                        <a href={previewUrl} target="_blank" rel="noreferrer" className="mmm-btn mmm-btn--ghost">
+                          Preview
+                        </a>
+                      )}
+                      <a href={f.downloadUrl} className="mmm-btn mmm-btn--ghost" download>
+                        Download
+                      </a>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

@@ -19,9 +19,13 @@
   font-weight: 700;
   font-size: 13px;
   padding: 8px 16px;
+  border: none;
   background: var(--paper);
   color: var(--ink);
   cursor: pointer;
+}
+.viewBtn + .viewBtn {
+  border-left: var(--bw-thin) solid var(--ink);
 }
 .viewActive {
   background: var(--median);
@@ -66,55 +70,36 @@
   min-width: 180px;
 }
 
-.dateRange {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-}
-
-.dateInput {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  padding: 7px 10px;
-  border: var(--bw-thin) solid var(--ink);
-  border-radius: var(--r-md);
-  background: var(--paper);
-  color: var(--ink);
-}
-
-.dateSep {
-  color: var(--ash);
-}
-
-.list {
-  display: flex;
-  flex-direction: column;
+.listWrap {
   border: var(--bw-thin) solid var(--ink);
   border-radius: var(--r-md);
   overflow: hidden;
+  overflow-x: auto;
 }
 
-.listHead,
-.listRow {
-  display: grid;
-  grid-template-columns: 2fr 1fr 1fr 2fr auto;
-  gap: var(--s-3);
-  align-items: center;
-  padding: var(--s-3) var(--s-4);
+.list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-small);
 }
 
-.listHead {
+.list th {
+  text-align: left;
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
+  font-weight: 400;
   text-transform: uppercase;
   letter-spacing: var(--tracking-caps);
   color: var(--ash);
   background: var(--bone);
+  padding: var(--s-3) var(--s-4);
+  white-space: nowrap;
 }
 
-.listRow {
+.list td {
+  padding: var(--s-3) var(--s-4);
   border-top: var(--bw-thin) solid var(--ink);
-  font-size: var(--fs-small);
+  vertical-align: middle;
 }
 
 .listName {
@@ -185,4 +170,18 @@
 .empty {
   color: var(--ash);
   font-style: italic;
+}
+
+@media (max-width: 640px) {
+  .list {
+    min-width: 640px;
+  }
+  .listActions {
+    flex-direction: column;
+    gap: var(--s-1);
+  }
+  .search {
+    flex: 1 1 100%;
+    min-width: 0;
+  }
 }
