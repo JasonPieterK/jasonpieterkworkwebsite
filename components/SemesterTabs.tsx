@@ -131,16 +131,18 @@ export default function SemesterTabs({
                 const Icon = fileIconFor(f.name);
                 return (
                   <tr key={f.path}>
-                    <td className={styles.listName}>
-                      <Icon size={18} weight="bold" className={styles.listIcon} aria-hidden="true" />
-                      {f.name}
-                      {banner && (
-                        <span
-                          className={`${styles.listBadge} ${banner === "new" ? styles.badgeNew : styles.badgeUpdated}`}
-                        >
-                          {banner === "new" ? "New" : "Updated"}
-                        </span>
-                      )}
+                    <td>
+                      <div className={styles.listName}>
+                        <Icon size={18} weight="bold" className={styles.listIcon} aria-hidden="true" />
+                        {f.name}
+                        {banner && (
+                          <span
+                            className={`${styles.listBadge} ${banner === "new" ? styles.badgeNew : styles.badgeUpdated}`}
+                          >
+                            {banner === "new" ? "New" : "Updated"}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td data-label="Release date" title={f.firstCommitDate}>
                       {f.firstCommitDate ? formatDate(f.firstCommitDate) : "–"}
@@ -151,15 +153,17 @@ export default function SemesterTabs({
                     <td className={styles.listNote} data-label="Commit note">
                       {f.lastCommitMessage || "–"}
                     </td>
-                    <td className={styles.listActions}>
-                      {previewUrl && (
-                        <a href={previewUrl} target="_blank" rel="noreferrer" className="mmm-btn mmm-btn--ghost">
-                          Preview
+                    <td>
+                      <div className={styles.listActions}>
+                        {previewUrl && (
+                          <a href={previewUrl} target="_blank" rel="noreferrer" className="mmm-btn mmm-btn--ghost">
+                            Preview
+                          </a>
+                        )}
+                        <a href={f.downloadUrl} className="mmm-btn mmm-btn--ghost" download>
+                          Download
                         </a>
-                      )}
-                      <a href={f.downloadUrl} className="mmm-btn mmm-btn--ghost" download>
-                        Download
-                      </a>
+                      </div>
                     </td>
                   </tr>
                 );
