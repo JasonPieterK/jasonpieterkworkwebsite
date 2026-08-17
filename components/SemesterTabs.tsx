@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { FileEntry, SemesterGroup } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { getPreviewUrl } from "@/lib/preview";
@@ -21,8 +21,19 @@ export default function SemesterTabs({
 }) {
   const [active, setActive] = useState(0);
   const [view, setView] = useState<"grid" | "list">("grid");
+  const [isMobile, setIsMobile] = useState(false);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 640px)");
+    setIsMobile(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+
+  const effectiveView = isMobile ? "grid" : view;
 
   function resetFilters() {
     setStatus("all");
@@ -64,22 +75,24 @@ export default function SemesterTabs({
             {s.semester}
           </button>
         ))}
-        <div className={styles.viewToggle}>
-          <button
-            className={`${styles.viewBtn} ${view === "grid" ? styles.viewActive : ""}`}
-            onClick={() => setView("grid")}
-            aria-label="Grid view"
-          >
-            Grid
-          </button>
-          <button
-            className={`${styles.viewBtn} ${view === "list" ? styles.viewActive : ""}`}
-            onClick={() => setView("list")}
-            aria-label="List view"
-          >
-            List
-          </button>
-        </div>
+        {!isMobile && (
+          <div className={styles.viewToggle}>
+            <button
+              className={`${styles.viewBtn} ${view === "grid" ? styles.viewActive : ""}`}
+              onClick={() => setView("grid")}
+              aria-label="Grid view"
+            >
+              Grid
+            </button>
+            <button
+              className={`${styles.viewBtn} ${view === "list" ? styles.viewActive : ""}`}
+              onClick={() => setView("list")}
+              aria-label="List view"
+            >
+              List
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={styles.filters}>
@@ -105,7 +118,7 @@ export default function SemesterTabs({
 
       {files.length === 0 ? (
         <p className={styles.empty}>No files match these filters.</p>
-      ) : view === "grid" ? (
+      ) : effectiveView === "grid" ? (
         <div className={styles.grid} key={current.semester}>
           {files.map((f, i) => (
             <FileCard key={f.path} file={f} index={i} banner={bannerFor(f)} />
