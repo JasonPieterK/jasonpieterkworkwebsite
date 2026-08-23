@@ -1,0 +1,87 @@
+"use client";
+
+import { useState } from "react";
+import { FileZip, WarningCircle } from "@phosphor-icons/react";
+import { downloadWithProgress } from "@/lib/download";
+import { formatBytes } from "@/lib/utils";
+import { confettiScreen } from "@/lib/confetti";
+import styles from "./ZipButton.module.css";
+
+/**
+ * Downloads a whole subject (or one semester) as a zip, with the same
+ * streaming progress bar the single-file download uses.
+ */
+export default function ZipButton({
+  subjectSlug,
+  semester,
+  label,
+  fileCount,
+  totalBytes,
+}: {
+  subjectSlug: string;
+  semester?: string;
+  label: string;
+  fileCount: number;
+  totalBytes: number;
+}) {
+  const [pct, setPct] = useState<number | null>(null);
+  const [bytes, setBytes] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setPct(0);
+    setBytes(0);
+    window.dispatchEvent(new Event("progress:start"));
+    const url = `/api/zip?subject=${encodeURIComponent(subjectSlug)}${
+      semester ? `&semester=${encodeURIComponent(semester)}` : ""
+    }`;
+    try {
+      await downloadWithProgress(url, `${label}.zip`, (p, b) => {
+        setPct(p);
+        setBytes(b);
+      });
+      confettiScreen();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Zip failed");
+    } finally {
+      setBusy(false);
+      window.dispatchEvent(new Event("progress:done"));
+    }
+  }
+
+  return (
+    <div className={styles.wrap}>
+      <button
+        type="button"
+        className={`mmm-btn mmm-btn--mode ${styles.btn}`}
+        onClick={run}
+        disabled={busy || fileCount === 0}
+        title={`Download ${fileCount} file${fileCount === 1 ? "" : "s"} as a zip`}
+      >
+        <FileZip size={18} weight="bold" className={busy ? styles.busyIcon : undefined} />
+        {busy ? "Zipping…" : `Download all (${fileCount})`}
+        {!busy && totalBytes > 0 && <span className={styles.size}>{formatBytes(totalBytes)}</span>}
+      </button>
+      {busy && (
+        <div className={styles.progressTrack} aria-live="polite">
+          <div
+            className={`${styles.progressBar} ${pct === null ? styles.indeterminate : ""}`}
+            style={pct === null ? undefined : { width: `${pct}%` }}
+          />
+          <span className={styles.progressText}>
+            {pct === null ? `Building zip… ${formatBytes(bytes)}` : `${Math.round(pct)}% · ${formatBytes(bytes)}`}
+          </span>
+        </div>
+      )}
+      {error && (
+        <p className={styles.error}>
+          <WarningCircle size={14} weight="bold" /> {error}
+        </p>
+      )}
+    </div>
+  );
+}

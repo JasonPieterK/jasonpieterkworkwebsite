@@ -1,20 +1,26 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import type { FileEntry, SemesterGroup } from "@/lib/types";
-import { formatDate } from "@/lib/utils";
-import { getPreviewUrl } from "@/lib/preview";
+import { extLabel, formatBytes, formatDate } from "@/lib/utils";
+import { SORTS, sortFiles, type SortKey } from "@/lib/sort";
 import { fileIconFor } from "@/lib/fileIcon";
 import FileCard from "./FileCard";
+import DownloadModal from "./DownloadModal";
+import StarButton from "./StarButton";
+import ZipButton from "./ZipButton";
 import styles from "./SemesterTabs.module.css";
 
 type StatusFilter = "all" | "new" | "updated";
 
 export default function SemesterTabs({
+  subjectSlug,
   semesters,
   newestAddedPath,
   newestUpdatedPath,
 }: {
+  subjectSlug: string;
   semesters: SemesterGroup[];
   newestAddedPath?: string;
   newestUpdatedPath?: string;
@@ -23,7 +29,21 @@ export default function SemesterTabs({
   const [view, setView] = useState<"grid" | "list">("grid");
   const [isMobile, setIsMobile] = useState(false);
   const [status, setStatus] = useState<StatusFilter>("all");
+  const [sort, setSort] = useState<SortKey>("newest");
   const [query, setQuery] = useState("");
+  const searchParams = useSearchParams();
+  const focusPath = searchParams.get("file");
+
+  // Deep link from the command palette (?file=<path>): jump to the semester
+  // that holds it and filter down to that one file.
+  useEffect(() => {
+    if (!focusPath) return;
+    const i = semesters.findIndex((g) => g.files.some((f) => f.path === focusPath));
+    if (i === -1) return;
+    setActive(i);
+    setStatus("all");
+    setQuery(focusPath.split("/").pop() ?? "");
+  }, [focusPath, semesters]);
 
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 640px)");
@@ -52,13 +72,16 @@ export default function SemesterTabs({
   }
 
   const files = useMemo(() => {
-    return current.files.filter((f) => {
+    const filtered = current.files.filter((f) => {
       if (status !== "all" && bannerFor(f) !== status) return false;
       if (query && !f.name.toLowerCase().includes(query.toLowerCase())) return false;
       return true;
     });
+    return sortFiles(filtered, sort);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, status, query, newestAddedPath, newestUpdatedPath]);
+  }, [current, status, query, sort, newestAddedPath, newestUpdatedPath]);
+
+  const semesterBytes = current.files.reduce((n, f) => n + f.size, 0);
 
   return (
     <div>
@@ -107,6 +130,21 @@ export default function SemesterTabs({
             </button>
           ))}
         </div>
+        <label className={styles.sortWrap}>
+          <span className={styles.sortLabel}>Sort</span>
+          <select
+            className={styles.sort}
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            aria-label="Sort files"
+          >
+            {SORTS.map((s) => (
+              <option key={s.key} value={s.key}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+        </label>
         <input
           className={styles.search}
           type="text"
@@ -114,22 +152,33 @@ export default function SemesterTabs({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <div className={styles.zipSlot}>
+          <ZipButton
+            subjectSlug={subjectSlug}
+            semester={current.semester}
+            label={current.semester}
+            fileCount={current.files.length}
+            totalBytes={semesterBytes}
+          />
+        </div>
       </div>
 
       {files.length === 0 ? (
         <p className={styles.empty}>No files match these filters.</p>
       ) : effectiveView === "grid" ? (
-        <div className={styles.grid} key={current.semester}>
+        <div className={styles.grid} key={`${current.semester}-${sort}`}>
           {files.map((f, i) => (
             <FileCard key={f.path} file={f} index={i} banner={bannerFor(f)} />
           ))}
         </div>
       ) : (
-        <div className={styles.listWrap} key={current.semester}>
+        <div className={styles.listWrap} key={`${current.semester}-${sort}`}>
           <table className={styles.list}>
             <thead>
               <tr>
                 <th>Name</th>
+                <th>Type</th>
+                <th>Size</th>
                 <th>Release date</th>
                 <th>Date modified</th>
                 <th>Commit note</th>
@@ -139,7 +188,6 @@ export default function SemesterTabs({
             <tbody>
               {files.map((f) => {
                 const modified = f.lastCommitDate !== f.firstCommitDate ? formatDate(f.lastCommitDate) : "–";
-                const previewUrl = getPreviewUrl(f);
                 const banner = bannerFor(f);
                 const Icon = fileIconFor(f.name);
                 return (
@@ -157,6 +205,12 @@ export default function SemesterTabs({
                         )}
                       </div>
                     </td>
+                    <td data-label="Type" className={styles.listMono}>
+                      {extLabel(f.name)}
+                    </td>
+                    <td data-label="Size" className={styles.listMono}>
+                      {formatBytes(f.size) || "–"}
+                    </td>
                     <td data-label="Release date" title={f.firstCommitDate}>
                       {f.firstCommitDate ? formatDate(f.firstCommitDate) : "–"}
                     </td>
@@ -168,14 +222,8 @@ export default function SemesterTabs({
                     </td>
                     <td>
                       <div className={styles.listActions}>
-                        {previewUrl && (
-                          <a href={previewUrl} target="_blank" rel="noreferrer" className="mmm-btn mmm-btn--ghost">
-                            Preview
-                          </a>
-                        )}
-                        <a href={f.downloadUrl} className="mmm-btn mmm-btn--ghost" download>
-                          Download
-                        </a>
+                        <StarButton path={f.path} label={f.name} />
+                        <DownloadModal file={f} />
                       </div>
                     </td>
                   </tr>

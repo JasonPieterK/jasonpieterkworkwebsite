@@ -59,6 +59,45 @@
   background: var(--mode);
 }
 
+.sortWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.sortLabel {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ash);
+}
+
+.sort {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: 7px 12px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+}
+.sort:hover {
+  background: var(--median-50);
+}
+
+.zipSlot {
+  margin-left: auto;
+}
+
+.listMono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  white-space: nowrap;
+}
+
 .search {
   font-family: var(--font-body);
   font-size: 14px;
@@ -194,4 +233,73 @@
     flex: 1 1 100%;
     min-width: 0;
   }
+  .zipSlot {
+    margin-left: 0;
+    flex: 1 1 100%;
+  }
+}
+
+/* ---------- motion ---------- */
+
+.tab {
+  position: relative;
+  overflow: hidden;
+}
+.tab:hover {
+  transform: translateY(-3px) rotate(-1deg);
+  box-shadow: var(--sh-1);
+}
+.tab:active {
+  transform: translateY(0) scale(0.97);
+}
+.tab.active {
+  animation: pop var(--dur-std) var(--ease-bounce);
+}
+
+.pill {
+  transition: transform var(--dur-micro) var(--ease-bounce),
+    background var(--dur-micro) var(--ease-out);
+}
+.pill:hover {
+  transform: translateY(-2px);
+  background: var(--mode-50);
+}
+.pillActive {
+  animation: pop var(--dur-std) var(--ease-bounce);
+}
+
+.viewBtn:hover {
+  background: var(--median-50);
+}
+
+.search:focus {
+  outline: none;
+  border-color: var(--median);
+  box-shadow: var(--sh-1);
+  transform: translateY(-1px);
+}
+
+/* Table rows stagger in and slide on hover */
+.list tbody tr {
+  animation: slide-in-left var(--dur-std) var(--ease-out) backwards;
+  transition: background var(--dur-micro) var(--ease-out);
+}
+.list tbody tr:nth-child(1)  { animation-delay: 20ms; }
+.list tbody tr:nth-child(2)  { animation-delay: 50ms; }
+.list tbody tr:nth-child(3)  { animation-delay: 80ms; }
+.list tbody tr:nth-child(4)  { animation-delay: 110ms; }
+.list tbody tr:nth-child(5)  { animation-delay: 140ms; }
+.list tbody tr:nth-child(n + 6) { animation-delay: 170ms; }
+.list tbody tr:hover {
+  background: var(--mode-50);
+}
+.list tbody tr:hover .listIcon {
+  transform: scale(1.2) rotate(-8deg);
+}
+.listIcon {
+  transition: transform var(--dur-std) var(--ease-bounce);
+}
+
+.empty {
+  animation: pop-in var(--dur-std) var(--ease-bounce);
 }

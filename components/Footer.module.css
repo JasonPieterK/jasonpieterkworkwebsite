@@ -15,3 +15,8 @@
 .mono {
   font-family: var(--font-mono);
 }
+
+.footer {
+  animation: rise-in var(--dur-big) var(--ease-out) backwards;
+  animation-delay: 200ms;
+}

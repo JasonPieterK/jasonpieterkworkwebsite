@@ -24,3 +24,28 @@
   line-height: 0.95;
   animation: rise-in var(--dur-big) var(--ease-bounce) backwards;
 }
+
+.headActions {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-4);
+  flex-wrap: wrap;
+}
+
+.ghLink {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--ash);
+  align-self: center;
+}
+.ghLink:hover {
+  color: var(--median);
+}
+
+.back {
+  position: relative;
+}
+.back:hover {
+  transform: translateX(-4px);
+  text-decoration: none;
+}

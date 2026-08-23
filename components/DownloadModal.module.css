@@ -1,0 +1,432 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 10, 44, 0.55);
+  padding: var(--s-4);
+  animation: fade-in var(--dur-std) var(--ease-out);
+}
+
+.modal {
+  width: 100%;
+  max-width: 380px;
+  background: var(--paper);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-3);
+  overflow: visible;
+  animation: pop-in var(--dur-std) var(--ease-bounce);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-5);
+  border-bottom: var(--bw-thin) solid var(--border-soft);
+}
+
+.headerTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  min-width: 0;
+}
+
+.iconBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-sm);
+  background: var(--median-50);
+  color: var(--median);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.closeBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  transition: background var(--dur-micro) var(--ease-out);
+}
+.closeBtn:hover {
+  background: var(--bone);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding: var(--s-5);
+}
+
+.label {
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ash);
+}
+
+.picker {
+  position: relative;
+}
+
+.pickerTrigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-2);
+  background: var(--paper);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: box-shadow var(--dur-micro) var(--ease-bounce);
+}
+.pickerTrigger:hover {
+  box-shadow: var(--sh-2);
+}
+
+.pickerText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ink);
+}
+.pickerMsg {
+  font-weight: 400;
+  color: var(--ash);
+}
+
+.chevron {
+  flex-shrink: 0;
+  transition: transform var(--dur-micro) var(--ease-out);
+}
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 10;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--paper);
+  border: var(--bw) solid var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-2);
+  padding: var(--s-2);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  animation: pop-in var(--dur-micro) var(--ease-bounce);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  cursor: pointer;
+  color: var(--ink);
+}
+.option:hover {
+  background: var(--mode-50);
+}
+.optionActive {
+  background: var(--mode-50);
+}
+
+.optionTag {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.optionMsg {
+  font-size: var(--fs-small);
+  color: var(--ash);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.empty {
+  padding: var(--s-3);
+  font-size: var(--fs-small);
+  color: var(--ash);
+  margin: 0;
+  text-align: center;
+}
+
+.actionRow {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-2);
+}
+
+.actionBtn {
+  flex: 1;
+  min-width: 0;
+  justify-content: center;
+  padding: 12px 18px;
+  font-size: 15px;
+  box-shadow: var(--sh-1);
+}
+.actionBtn:hover {
+  box-shadow: var(--sh-2);
+}
+
+.downloadBtn {
+  background: var(--mode);
+  color: var(--ink);
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- download progress ---------- */
+
+.progressWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: var(--s-3);
+  animation: pop-in var(--dur-std) var(--ease-bounce);
+}
+
+.progressTrack {
+  height: 10px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--bone);
+  overflow: hidden;
+}
+
+.progressBar {
+  height: 100%;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--median), var(--mode));
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  transition: width var(--dur-std) var(--ease-out);
+}
+
+.progressIndeterminate {
+  width: 100% !important;
+  animation: indeterminate 1.2s var(--ease-out) infinite;
+}
+
+.progressText {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.doneIcon {
+  color: var(--mode);
+  animation: pop var(--dur-std) var(--ease-bounce);
+}
+
+.errorText {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: var(--s-3) 0 0;
+  font-size: var(--fs-small);
+  color: var(--coral);
+  animation: wiggle var(--dur-std) var(--ease-out);
+}
+
+.bouncing {
+  animation: float 0.9s var(--ease-out) infinite;
+}
+
+.downloadBtn:disabled {
+  cursor: progress;
+  opacity: 0.75;
+}
+
+/* ---------- version history skeletons ---------- */
+
+.optionSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: var(--s-2) var(--s-3);
+}
+
+.skelTag {
+  height: 10px;
+  width: 40%;
+}
+
+.skelMsg {
+  height: 12px;
+  width: 78%;
+}
+
+/* Dropdown rows cascade in instead of appearing all at once */
+.dropdown .option {
+  animation: slide-in-left var(--dur-std) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 28ms);
+}
+
+/* ---------- file meta + in-page preview ---------- */
+
+.modal {
+  transition: max-width var(--dur-big) var(--ease-bounce);
+}
+.modalWide {
+  max-width: 820px;
+}
+
+.fileMeta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-bottom: var(--s-2);
+}
+
+.metaChip {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink);
+  background: var(--bone);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+}
+
+.metaDate {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+}
+
+.previewBox {
+  position: relative;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--bone);
+  overflow: hidden;
+  margin-bottom: var(--s-3);
+  animation: pop-in var(--dur-std) var(--ease-bounce);
+}
+
+.previewFrame {
+  display: block;
+  width: 100%;
+  height: min(62vh, 560px);
+  border: none;
+  background: var(--white);
+}
+
+.previewImg {
+  display: block;
+  width: 100%;
+  max-height: min(62vh, 560px);
+  object-fit: contain;
+  background: var(--white);
+}
+
+.previewOut {
+  position: absolute;
+  right: var(--s-2);
+  bottom: var(--s-2);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 4px 9px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  opacity: 0.85;
+}
+.previewOut:hover {
+  opacity: 1;
+  transform: translateY(-2px);
+  text-decoration: none;
+}
+
+/* ---------- closing animations ---------- */
+
+.overlayClosing {
+  animation: fade-out var(--dur-std) var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+.modalClosing {
+  animation: pop-out var(--dur-std) var(--ease-in) forwards;
+}
+
+/* The inline preview folds away instead of vanishing */
+.previewBox {
+  transform-origin: top center;
+}
+
+.dropdownClosing {
+  animation: pop-out 160ms var(--ease-in) forwards;
+  pointer-events: none;
+}
+
+.previewClosing {
+  animation: collapse-out 200ms var(--ease-in) forwards;
+  pointer-events: none;
+}

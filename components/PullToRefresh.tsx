@@ -44,6 +44,7 @@ export default function PullToRefresh() {
       startY.current = null;
       if (pullRef.current >= THRESHOLD) {
         setRefreshing(true);
+        window.dispatchEvent(new Event("progress:start"));
         try {
           await fetch("/api/revalidate", { method: "POST" });
         } catch {
@@ -53,6 +54,7 @@ export default function PullToRefresh() {
         window.setTimeout(() => {
           setRefreshing(false);
           setPull(0);
+          window.dispatchEvent(new Event("progress:done"));
         }, 500);
       } else {
         setPull(0);

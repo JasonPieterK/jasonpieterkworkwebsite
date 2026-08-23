@@ -1,0 +1,77 @@
+.rails {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+  padding-top: var(--s-7);
+}
+
+.rail {
+  animation: rise-in var(--dur-big) var(--ease-bounce) backwards;
+}
+
+.railHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-3);
+  margin-bottom: var(--s-4);
+}
+
+.railTitle {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--fs-h4);
+  margin: 0;
+}
+
+.starIcon {
+  color: var(--sun);
+  animation: pop var(--dur-big) var(--ease-bounce);
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 400;
+  color: var(--ash);
+  border: var(--bw-thin) solid var(--border-soft);
+  border-radius: var(--r-pill);
+  padding: 1px 8px;
+}
+
+.clear {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
+}
+.clear:hover {
+  background: var(--bone);
+  color: var(--ink);
+}
+
+.railGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: var(--s-4);
+}
+
+.item {
+  animation: rise-in var(--dur-big) var(--ease-bounce) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.crumb {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  margin: 0 0 var(--s-1);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

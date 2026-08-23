@@ -67,3 +67,29 @@
     display: none;
   }
 }
+
+/* ---------- motion ---------- */
+
+.mark {
+  transition: transform var(--dur-big) var(--ease-bounce);
+}
+.brand:hover .mark {
+  transform: rotate(360deg) scale(1.12);
+}
+
+.brandText {
+  transition: color var(--dur-micro) var(--ease-out);
+}
+.brand:hover .brandText {
+  color: var(--median);
+}
+
+.searchWrap :global(.mmm-input) {
+  transition: box-shadow var(--dur-micro) var(--ease-bounce),
+    transform var(--dur-micro) var(--ease-bounce),
+    border-color var(--dur-micro) var(--ease-out);
+}
+.searchWrap :global(.mmm-input):focus {
+  transform: translateY(-1px);
+  border-color: var(--median);
+}

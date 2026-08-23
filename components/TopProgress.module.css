@@ -1,0 +1,19 @@
+.track {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  z-index: 500;
+  pointer-events: none;
+  background: transparent;
+  animation: fade-in var(--dur-micro) var(--ease-out);
+}
+
+.bar {
+  height: 100%;
+  border-bottom-right-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--median), var(--mean), var(--mode));
+  box-shadow: 0 0 12px rgba(45, 127, 249, 0.7);
+  transition: width var(--dur-std) var(--ease-out);
+}

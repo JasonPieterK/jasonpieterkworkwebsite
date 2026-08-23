@@ -1,5 +1,6 @@
 import { getSubjects } from "@/lib/github";
 import SubjectCard from "@/components/SubjectCard";
+import FileRail from "@/components/FileRail";
 import styles from "./page.module.css";
 
 export default async function Home() {
@@ -12,11 +13,14 @@ export default async function Home() {
           Couldn&rsquo;t reach GitHub right now — try refreshing in a minute.
         </p>
       ) : (
+        <>
+        <FileRail subjects={subjects} />
         <div className={styles.grid}>
           {subjects.map((s, i) => (
             <SubjectCard key={s.slug} subject={s} index={i} />
           ))}
         </div>
+        </>
       )}
     </main>
   );

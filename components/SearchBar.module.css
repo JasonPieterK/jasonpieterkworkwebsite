@@ -7,3 +7,27 @@
 .input:focus {
   box-shadow: var(--sh-1);
 }
+
+.wrap {
+  position: relative;
+  display: block;
+}
+
+.hint {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 2px 7px;
+  border: var(--bw-thin) solid var(--border-soft);
+  border-radius: var(--r-sm);
+  background: var(--bone);
+  color: var(--ash);
+  transition: opacity var(--dur-micro) var(--ease-out);
+}
+.wrap:focus-within .hint {
+  opacity: 0;
+}

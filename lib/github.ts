@@ -197,6 +197,7 @@ export async function getSubjects(): Promise<Subject[]> {
       firstCommitDate: commitInfo?.firstDate ?? lastCommitDate,
       lastCommitMessage: commitInfo?.message ?? "",
       changeKind: commitInfo?.changeKind ?? "modified",
+      size: item.size ?? 0,
     };
 
     const semGroup = getSemesterGroup(subject, semesterName);

@@ -12,13 +12,17 @@ export default function RefreshButton() {
   async function handleClick() {
     if (spinning) return;
     setSpinning(true);
+    window.dispatchEvent(new Event("progress:start"));
     try {
       await fetch("/api/revalidate", { method: "POST" });
     } catch {
       // offline or route unreachable — router.refresh() still re-reads whatever cache exists
     }
     router.refresh();
-    window.setTimeout(() => setSpinning(false), 700);
+    window.setTimeout(() => {
+      setSpinning(false);
+      window.dispatchEvent(new Event("progress:done"));
+    }, 700);
   }
 
   return (

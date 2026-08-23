@@ -94,3 +94,74 @@
   color: var(--ash);
   margin: 0;
 }
+
+/* ---------- motion ---------- */
+
+/* Light sweep across the card on hover */
+.card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    115deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.55) 50%,
+    transparent 65%
+  );
+  background-size: 250% 100%;
+  background-position: 150% 0;
+  opacity: 0;
+  transition: background-position var(--dur-big) var(--ease-out),
+    opacity var(--dur-micro) var(--ease-out);
+}
+.card:hover::after {
+  opacity: 1;
+  background-position: -50% 0;
+}
+
+.card:hover {
+  transform: rotate(0deg) translateY(-6px) scale(1.02);
+  box-shadow: var(--sh-4);
+}
+.card:active {
+  transform: rotate(0deg) translateY(-1px) scale(0.99);
+  box-shadow: var(--sh-1);
+}
+
+.iconBadge {
+  transition: transform var(--dur-std) var(--ease-bounce),
+    box-shadow var(--dur-std) var(--ease-bounce);
+}
+.card:hover .iconBadge {
+  transform: rotate(-8deg) scale(1.1);
+  box-shadow: var(--sh-1);
+}
+
+.name {
+  transition: letter-spacing var(--dur-std) var(--ease-out);
+}
+.card:hover .name {
+  letter-spacing: 0.005em;
+}
+
+.card:hover .count {
+  color: var(--ink);
+}
+
+/* Banner text scrolls its filename into view on hover */
+.card:hover .bannerFile {
+  animation: float 1.2s var(--ease-out) infinite;
+}
+
+/* Replay the entrance as cards scroll into view (Chrome/Edge). */
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .card {
+      animation: card-rise linear both;
+      animation-timeline: view();
+      animation-range: entry 0% cover 20%;
+      animation-delay: 0s;
+    }
+  }
+}

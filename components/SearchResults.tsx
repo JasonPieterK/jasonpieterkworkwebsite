@@ -37,7 +37,7 @@ export default function SearchResults({ subjects }: { subjects: Subject[] }) {
   return (
     <div className={styles.grid}>
       {matches.map(({ subjectName, semester, file }, i) => (
-        <div key={file.path} className={styles.item}>
+        <div key={file.path} className={styles.item} style={{ "--i": i } as React.CSSProperties}>
           <p className={styles.crumb}>
             {subjectName} · {semester}
           </p>

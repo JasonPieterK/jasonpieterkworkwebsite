@@ -18,6 +18,7 @@ export type FileEntry = {
   firstCommitDate: string;
   lastCommitMessage: string;
   changeKind: ChangeKind;
+  size: number;
 };
 
 export type SemesterGroup = {

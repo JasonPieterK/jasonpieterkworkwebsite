@@ -1,0 +1,71 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.btn {
+  padding: 12px 22px;
+  font-size: 15px;
+}
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+.size {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 400;
+  opacity: 0.7;
+}
+
+.busyIcon {
+  animation: float 0.9s var(--ease-out) infinite;
+}
+
+.progressTrack {
+  position: relative;
+  height: 8px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--bone);
+  overflow: hidden;
+  animation: pop-in var(--dur-std) var(--ease-bounce);
+}
+
+.progressBar {
+  height: 100%;
+  width: 0;
+  border-radius: var(--r-pill);
+  background: linear-gradient(90deg, var(--mode), var(--median));
+  background-size: 200% 100%;
+  animation: shimmer 1.6s linear infinite;
+  transition: width var(--dur-std) var(--ease-out);
+}
+
+.indeterminate {
+  width: 100%;
+  animation: indeterminate 1.2s var(--ease-out) infinite;
+}
+
+.progressText {
+  position: absolute;
+  left: 0;
+  top: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  white-space: nowrap;
+}
+
+.error {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0;
+  font-size: var(--fs-small);
+  color: var(--coral);
+  animation: wiggle var(--dur-std) var(--ease-out);
+}

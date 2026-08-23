@@ -16,3 +16,12 @@
   color: var(--ash);
   margin-bottom: var(--s-1);
 }
+
+.item {
+  animation: rise-in var(--dur-big) var(--ease-bounce) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+
+.hint {
+  animation: pop-in var(--dur-std) var(--ease-bounce);
+}

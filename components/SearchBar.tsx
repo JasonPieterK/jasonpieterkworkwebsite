@@ -25,12 +25,17 @@ export default function SearchBar() {
   }
 
   return (
-    <input
-      className={`mmm-input ${styles.input}`}
-      type="search"
-      placeholder="Search files or subjects…"
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <div className={styles.wrap}>
+      <input
+        className={`mmm-input ${styles.input}`}
+        type="search"
+        placeholder="Search files or subjects…"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <kbd className={styles.hint} aria-hidden="true">
+        /
+      </kbd>
+    </div>
   );
 }

@@ -7,3 +7,7 @@ export function githubTreeUrl(subjectName: string, semester?: string): string {
   const path = semester ? `${subjectName}/${semester}` : subjectName;
   return `https://github.com/${OWNER}/${REPO}/tree/${BRANCH}/${encodeURI(ROOT_PREFIX + path)}`;
 }
+
+export function rawUrlFor(path: string, ref: string = BRANCH): string {
+  return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${ref}/${encodeURI(path)}`;
+}
