@@ -79,7 +79,7 @@ export default function ZipButton({
         className={`mmm-btn mmm-btn--mode ${styles.btn}`}
         onClick={run}
         disabled={busy || fileCount === 0}
-        title={`Download ${fileCount} file${fileCount === 1 ? "" : "s"} as a zip`}
+        title={`Download all ${fileCount} file${fileCount === 1 ? "" : "s"} in this subject as a zip`}
       >
         <FileZip size={18} weight="bold" className={busy ? styles.busyIcon : undefined} />
         {busy ? "Zipping…" : `Download all (${fileCount})`}

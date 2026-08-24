@@ -61,10 +61,6 @@
 
 
 
-.zipSlot {
-  margin-left: auto;
-}
-
 .search {
   font-family: var(--font-body);
   font-size: 14px;
@@ -132,10 +128,6 @@
     min-width: 0;
   }
 
-  .zipSlot {
-    margin-left: 0;
-    flex: 1 1 100%;
-  }
 
 }
 

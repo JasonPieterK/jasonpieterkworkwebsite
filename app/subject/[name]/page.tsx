@@ -56,7 +56,7 @@ export default async function SubjectPage(props: PageProps<"/subject/[name]">) {
           missing. The files below are current — try the refresh button in a minute.
         </p>
       )}
-      <SemesterTabs subjectSlug={subject.slug} semesters={subject.semesters} />
+      <SemesterTabs semesters={subject.semesters} />
     </main>
   );
 }
