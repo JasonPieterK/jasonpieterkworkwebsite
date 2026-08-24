@@ -25,7 +25,25 @@ const RENDER_OPTIONS = {
   renderEndnotes: true,
   ignoreWidth: false,
   ignoreHeight: false,
-  useBase64URL: true, // inline images, so a print window has nothing to wait on
+  useBase64URL: true, // inline images, so printing has nothing to wait on
+
+  /**
+   * Positions tab stops from the paragraph's own tab definitions. Off by
+   * default, which renders every tab as a single em-space — Word documents
+   * lean on tabs for alignment constantly, so this is the difference between
+   * aligned columns and text that drifts.
+   */
+  experimental: true,
+
+  /**
+   * Honour the page breaks Word itself recorded in the file, instead of
+   * re-flowing and guessing where pages end. This is what makes the printed
+   * page count and page contents line up with what Word shows.
+   */
+  ignoreLastRenderedPageBreak: false,
+
+  /** Drops the on-screen wrapper chrome from printed output. */
+  hideWrapperOnPrint: true,
 };
 
 /**
