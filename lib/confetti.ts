@@ -6,12 +6,17 @@ const COLORS = ["#FF3D8A", "#2D7FF9", "#B8E22B", "#FFC93C", "#FF6B4A", "#6B3FA0"
  * ponytail: Web Animations API + plain divs — no canvas, no dependency.
  * Elements remove themselves when their animation finishes.
  */
-export function confettiScreen(count = 160): void {
+export function confettiScreen(count?: number): void {
   if (typeof window === "undefined") return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
   const W = window.innerWidth;
   const H = window.innerHeight;
+
+  // A phone gets the same visual density with far fewer elements to animate.
+  if (count === undefined) {
+    count = W < 480 ? 70 : W < 900 ? 110 : 160;
+  }
 
   const layer = document.createElement("div");
   layer.setAttribute("aria-hidden", "true");

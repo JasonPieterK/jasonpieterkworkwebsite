@@ -10,7 +10,16 @@ const EMPTY: string[] = [];
 const cache = new Map<string, { raw: string | null; value: string[] }>();
 
 function readList(key: string): string[] {
-  const raw = localStorage.getItem(key);
+  // Reading localStorage throws outright when storage is blocked (third-party
+  // context, "block all cookies"). This runs inside getSnapshot, so an
+  // unguarded throw takes down every page that renders a star.
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(key);
+  } catch {
+    return EMPTY;
+  }
+
   const hit = cache.get(key);
   if (hit && hit.raw === raw) return hit.value;
   let value = EMPTY;
@@ -69,5 +78,15 @@ export function useLocalList(key: string, limit = 50) {
 
   const clear = useCallback(() => write([]), [write]);
 
-  return { items, toggle, clear, has: (path: string) => items.includes(path) };
+  /** Drop entries that no longer resolve to anything (renamed/removed files). */
+  const keepOnly = useCallback(
+    (predicate: (path: string) => boolean) => {
+      const current = readList(key);
+      const next = current.filter(predicate);
+      if (next.length !== current.length) write(next);
+    },
+    [key, write]
+  );
+
+  return { items, toggle, clear, keepOnly, has: (path: string) => items.includes(path) };
 }

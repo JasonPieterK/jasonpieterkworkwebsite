@@ -61,13 +61,23 @@ export default function PullToRefresh() {
       }
     }
 
+    // An interrupted gesture (incoming call, notification) fires touchcancel
+    // and never touchend, which used to leave the indicator on screen.
+    function onTouchCancel() {
+      tracking.current = false;
+      startY.current = null;
+      setPull(0);
+    }
+
     window.addEventListener("touchstart", onTouchStart, { passive: true });
     window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("touchend", onTouchEnd);
+    window.addEventListener("touchcancel", onTouchCancel);
     return () => {
       window.removeEventListener("touchstart", onTouchStart);
       window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("touchend", onTouchEnd);
+      window.removeEventListener("touchcancel", onTouchCancel);
     };
   }, [router, refreshing]);
 

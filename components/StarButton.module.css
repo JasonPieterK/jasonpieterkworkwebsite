@@ -11,10 +11,20 @@
   color: var(--ash);
   cursor: pointer;
 }
-.star:hover {
-  background: var(--sun-50);
-  color: var(--ink);
-  transform: scale(1.12) rotate(-12deg);
+@media (hover: hover) {
+  .star:hover {
+    background: var(--sun-50);
+    color: var(--ink);
+    transform: scale(1.12) rotate(-12deg);
+  }
+}
+
+/* Comfortable thumb target on touch screens (WCAG 2.2 target size). */
+@media (max-width: 640px), (hover: none) {
+  .star {
+    width: 40px;
+    height: 40px;
+  }
 }
 .star:active {
   transform: scale(0.9);
@@ -23,4 +33,17 @@
   background: var(--sun);
   color: var(--ink);
   animation: pop var(--dur-std) var(--ease-bounce);
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
 }

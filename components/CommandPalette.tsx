@@ -4,11 +4,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Books, MagnifyingGlass, Star } from "@phosphor-icons/react";
-import type { Subject } from "@/lib/types";
-import { fileIconFor } from "@/lib/fileIcon";
+import type { SearchIndex } from "@/lib/searchIndex";
+import FileIcon from "./FileIcon";
 import { extLabel, formatBytes } from "@/lib/utils";
 import { STARRED_KEY, useLocalList } from "@/lib/useLocalList";
 import { useExitAnimation } from "@/lib/useExitAnimation";
+import { useIsClient } from "@/lib/useIsClient";
 import styles from "./CommandPalette.module.css";
 
 type Item =
@@ -38,53 +39,53 @@ function score(haystack: string, needle: string): number {
   return 1000 + gaps;
 }
 
-export default function CommandPalette({ subjects }: { subjects: Subject[] }) {
+export default function CommandPalette({
+  index,
+  open,
+  onOpenChange,
+}: {
+  index: SearchIndex;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useIsClient();
   const [query, setQuery] = useState("");
   const [cursor, setCursor] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const starred = useLocalList(STARRED_KEY);
-  const shell = useExitAnimation(open, 200);
+  const shell = useExitAnimation(open, 260);
 
-  useEffect(() => setMounted(true), []);
-
-  const index = useMemo<Item[]>(() => {
-    const items: Item[] = [];
-    for (const subject of subjects) {
-      items.push({
-        kind: "subject",
-        id: subject.slug,
-        name: subject.name,
-        sub: `${subject.fileCount} file${subject.fileCount === 1 ? "" : "s"}`,
-        href: `/subject/${subject.slug}`,
+  const items = useMemo<Item[]>(() => {
+    const out: Item[] = index.subjects.map((s) => ({
+      kind: "subject" as const,
+      id: s.slug,
+      name: s.name,
+      sub: `${s.fileCount} file${s.fileCount === 1 ? "" : "s"}`,
+      href: `/subject/${s.slug}`,
+    }));
+    for (const f of index.files) {
+      out.push({
+        kind: "file",
+        id: f.path,
+        name: f.name,
+        sub: `${f.subject} · ${f.semester}`,
+        href: `/subject/${f.slug}`,
+        ext: extLabel(f.name),
+        size: f.size,
       });
-      for (const group of subject.semesters) {
-        for (const file of group.files) {
-          items.push({
-            kind: "file",
-            id: file.path,
-            name: file.name,
-            sub: `${subject.name} · ${group.semester}`,
-            href: `/subject/${subject.slug}`,
-            ext: extLabel(file.name),
-            size: file.size,
-          });
-        }
-      }
     }
-    return items;
-  }, [subjects]);
+    return out;
+  }, [index]);
 
   const results = useMemo(() => {
     if (!query.trim()) {
       // Empty query: starred first, then subjects — a useful default, not a blank box.
-      const starredItems = index.filter((i) => i.kind === "file" && starred.items.includes(i.id));
-      return [...starredItems, ...index.filter((i) => i.kind === "subject")].slice(0, MAX_RESULTS);
+      const starredItems = items.filter((i) => i.kind === "file" && starred.items.includes(i.id));
+      return [...starredItems, ...items.filter((i) => i.kind === "subject")].slice(0, MAX_RESULTS);
     }
-    return index
+    return items
       .map((item) => {
         const own = score(item.name, query);
         const ctx = score(`${item.name} ${item.sub}`, query);
@@ -95,38 +96,28 @@ export default function CommandPalette({ subjects }: { subjects: Subject[] }) {
       .sort((a, b) => a.rank - b.rank || a.item.name.length - b.item.name.length)
       .slice(0, MAX_RESULTS)
       .map((r) => r.item);
-  }, [index, query, starred.items]);
+  }, [items, query, starred.items]);
 
-  useEffect(() => setCursor(0), [query]);
+  // Reset the highlight when the query changes — adjusted during render, which
+  // React re-runs immediately without painting the stale cursor.
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (query !== prevQuery) {
+    setPrevQuery(query);
+    setCursor(0);
+  }
 
-  // Global shortcuts: ⌘K / Ctrl+K opens the palette, "/" focuses search.
+  // A fresh open starts from a blank box.
+  const [prevOpen, setPrevOpen] = useState(open);
+  if (open !== prevOpen) {
+    setPrevOpen(open);
+    if (open) setQuery("");
+  }
+
+  // Focus after the portal paints (a DOM effect, not a state update).
   useEffect(() => {
-    function onKey(e: KeyboardEvent) {
-      const target = e.target as HTMLElement | null;
-      const typing =
-        target &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
-
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setOpen((v) => !v);
-        return;
-      }
-      if (e.key === "/" && !typing && !open) {
-        e.preventDefault();
-        setOpen(true);
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
-
-  useEffect(() => {
-    if (open) {
-      setQuery("");
-      // Focus after the portal paints.
-      requestAnimationFrame(() => inputRef.current?.focus());
-    }
+    if (!open) return;
+    const raf = requestAnimationFrame(() => inputRef.current?.focus());
+    return () => cancelAnimationFrame(raf);
   }, [open]);
 
   // Keep the highlighted row in view when arrowing through a long list.
@@ -135,12 +126,13 @@ export default function CommandPalette({ subjects }: { subjects: Subject[] }) {
   }, [cursor]);
 
   function go(item: Item) {
-    setOpen(false);
-    router.push(item.kind === "file" ? `${item.href}?file=${encodeURIComponent(item.id)}` : item.href);
+    onOpenChange(false);
+    // Hash, not a query param: keeps subject pages statically prerenderable.
+    router.push(item.kind === "file" ? `${item.href}#${encodeURIComponent(item.id)}` : item.href);
   }
 
   function onInputKey(e: React.KeyboardEvent) {
-    if (e.key === "Escape") setOpen(false);
+    if (e.key === "Escape") onOpenChange(false);
     else if (e.key === "ArrowDown") {
       e.preventDefault();
       setCursor((c) => (results.length ? (c + 1) % results.length : 0));
@@ -158,7 +150,7 @@ export default function CommandPalette({ subjects }: { subjects: Subject[] }) {
   return createPortal(
     <div
       className={`${styles.overlay} ${shell.closing ? styles.overlayClosing : ""}`}
-      onMouseDown={(e) => e.target === e.currentTarget && setOpen(false)}
+      onMouseDown={(e) => e.target === e.currentTarget && onOpenChange(false)}
     >
       <div
         className={`${styles.panel} ${shell.closing ? styles.panelClosing : ""}`}
@@ -182,38 +174,45 @@ export default function CommandPalette({ subjects }: { subjects: Subject[] }) {
 
         <div className={styles.results} ref={listRef}>
           {results.length === 0 && <p className={styles.empty}>Nothing matches “{query}”.</p>}
-          {results.map((item, i) => {
-            const Icon = item.kind === "file" ? fileIconFor(item.name) : Books;
-            return (
-              <button
-                key={`${item.kind}:${item.id}`}
-                type="button"
-                data-active={i === cursor}
-                className={`${styles.row} ${i === cursor ? styles.rowActive : ""}`}
-                style={{ "--i": i } as React.CSSProperties}
-                onMouseEnter={() => setCursor(i)}
-                onClick={() => go(item)}
-              >
-                <Icon size={18} weight="bold" className={styles.rowIcon} aria-hidden="true" />
-                <span className={styles.rowText}>
-                  <span className={styles.rowName}>
-                    {item.name}
-                    {item.kind === "file" && starred.items.includes(item.id) && (
-                      <Star size={12} weight="fill" className={styles.rowStar} />
-                    )}
-                  </span>
-                  <span className={styles.rowSub}>{item.sub}</span>
+          {results.map((item, i) => (
+            <button
+              key={`${item.kind}:${item.id}`}
+              type="button"
+              data-active={i === cursor}
+              className={`${styles.row} ${i === cursor ? styles.rowActive : ""}`}
+              style={{ "--i": i } as React.CSSProperties}
+              onMouseEnter={() => setCursor(i)}
+              onClick={() => go(item)}
+            >
+              {item.kind === "file" ? (
+                <FileIcon
+                  name={item.name}
+                  size={18}
+                  weight="bold"
+                  className={styles.rowIcon}
+                  aria-hidden="true"
+                />
+              ) : (
+                <Books size={18} weight="bold" className={styles.rowIcon} aria-hidden="true" />
+              )}
+              <span className={styles.rowText}>
+                <span className={styles.rowName}>
+                  {item.name}
+                  {item.kind === "file" && starred.items.includes(item.id) && (
+                    <Star size={12} weight="fill" className={styles.rowStar} />
+                  )}
                 </span>
-                {item.kind === "file" && (
-                  <span className={styles.rowMeta}>
-                    {item.ext}
-                    {item.size > 0 && ` · ${formatBytes(item.size)}`}
-                  </span>
-                )}
-                <ArrowRight size={14} weight="bold" className={styles.rowArrow} />
-              </button>
-            );
-          })}
+                <span className={styles.rowSub}>{item.sub}</span>
+              </span>
+              {item.kind === "file" && (
+                <span className={styles.rowMeta}>
+                  {item.ext}
+                  {item.size > 0 && ` · ${formatBytes(item.size)}`}
+                </span>
+              )}
+              <ArrowRight size={14} weight="bold" className={styles.rowArrow} />
+            </button>
+          ))}
         </div>
 
         <div className={styles.footer}>

@@ -28,11 +28,13 @@ export default function ZipButton({
   const [bytes, setBytes] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   async function run() {
     if (busy) return;
     setBusy(true);
     setError(null);
+    setWarning(null);
     setPct(0);
     setBytes(0);
     window.dispatchEvent(new Event("progress:start"));
@@ -40,10 +42,27 @@ export default function ZipButton({
       semester ? `&semester=${encodeURIComponent(semester)}` : ""
     }`;
     try {
-      await downloadWithProgress(url, `${label}.zip`, (p, b) => {
-        setPct(p);
-        setBytes(b);
-      });
+      await downloadWithProgress(
+        url,
+        `${label}.zip`,
+        (p, b) => {
+          setPct(p);
+          setBytes(b);
+        },
+        undefined,
+        (res) => {
+          // The route skips files it could not fetch rather than failing the
+          // whole archive; without this the zip just looks complete.
+          const missing = Number(res.headers.get("X-Zip-Missing-Files")) || 0;
+          if (missing > 0) {
+            setWarning(
+              `${missing} file${missing === 1 ? "" : "s"} could not be included — download ${
+                missing === 1 ? "it" : "them"
+              } individually.`
+            );
+          }
+        }
+      );
       confettiScreen();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Zip failed");
@@ -80,6 +99,11 @@ export default function ZipButton({
       {error && (
         <p className={styles.error}>
           <WarningCircle size={14} weight="bold" /> {error}
+        </p>
+      )}
+      {warning && !error && (
+        <p className={styles.warning}>
+          <WarningCircle size={14} weight="bold" /> {warning}
         </p>
       )}
     </div>

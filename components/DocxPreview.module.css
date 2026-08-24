@@ -1,0 +1,117 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  flex: 1;
+}
+
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  padding: var(--s-3);
+}
+
+.bar {
+  display: block;
+  width: 70px;
+  height: 8px;
+}
+
+.error {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: var(--s-3);
+  font-size: var(--fs-small);
+  color: var(--coral);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 6px var(--s-2);
+  border-bottom: var(--bw-thin) solid var(--border-soft);
+  background: var(--bg-1);
+}
+
+.zoomBtn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.zoomBtn:active {
+  transform: scale(0.94);
+}
+
+.zoomLabel {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  min-width: 42px;
+  text-align: center;
+}
+
+.scroller {
+  overflow: auto;
+  background: var(--bone);
+  /* Momentum scrolling inside the modal on iOS */
+  -webkit-overflow-scrolling: touch;
+  /* Tall enough to read, but the modal's own max-height is the real limit. */
+  max-height: min(58dvh, 620px);
+  min-height: 220px;
+}
+
+/* docx-preview renders each page as <section class="docx"> inside .docx-wrapper */
+.page :global(.docx-wrapper) {
+  background: transparent;
+  padding: var(--s-3) 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.page :global(section.docx) {
+  background: #fff;
+  box-shadow: var(--sh-1);
+  border: var(--bw-thin) solid var(--border-soft);
+  margin: 0 !important;
+}
+
+.page :global(img) {
+  max-width: 100%;
+  height: auto;
+}
+
+@media (max-width: 640px) {
+  .scroller {
+    /* The sheet is already near-fullscreen; let the document use the rest. */
+    max-height: none;
+    flex: 1;
+  }
+  .wrap {
+    height: 100%;
+    flex: 1;
+  }
+  .zoomBtn {
+    min-width: 40px;
+    height: 40px;
+  }
+  .page :global(.docx-wrapper) {
+    padding: var(--s-2) 0;
+  }
+}

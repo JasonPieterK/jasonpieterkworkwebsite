@@ -1,6 +1,7 @@
 import { getSubjects } from "@/lib/github";
 import SubjectCard from "@/components/SubjectCard";
 import FileRail from "@/components/FileRail";
+import { buildSearchIndex } from "@/lib/searchIndex";
 import styles from "./page.module.css";
 
 export default async function Home() {
@@ -14,7 +15,7 @@ export default async function Home() {
         </p>
       ) : (
         <>
-        <FileRail subjects={subjects} />
+        <FileRail index={buildSearchIndex(subjects)} />
         <div className={styles.grid}>
           {subjects.map((s, i) => (
             <SubjectCard key={s.slug} subject={s} index={i} />

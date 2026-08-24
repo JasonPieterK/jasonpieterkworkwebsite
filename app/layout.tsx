@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { Bagel_Fat_One, Unbounded, DM_Sans, Caveat, JetBrains_Mono } from "next/font/google";
+import { Bagel_Fat_One, Unbounded, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./mmm-tokens.css";
 import "./globals.css";
 import Header from "@/components/Header";
@@ -10,7 +10,7 @@ import TopProgress from "@/components/TopProgress";
 
 const bagel = Bagel_Fat_One({ weight: "400", subsets: ["latin"], variable: "--font-hero-family" });
 const unbounded = Unbounded({
-  weight: ["400", "500", "700", "800"],
+  weight: ["700", "800"],
   subsets: ["latin"],
   variable: "--font-display-family",
   display: "swap",
@@ -19,12 +19,6 @@ const dmSans = DM_Sans({
   weight: ["400", "500", "700"],
   subsets: ["latin"],
   variable: "--font-body-family",
-  display: "swap",
-});
-const caveat = Caveat({
-  weight: ["400", "700"],
-  subsets: ["latin"],
-  variable: "--font-hand-family",
   display: "swap",
 });
 const jetbrainsMono = JetBrains_Mono({
@@ -58,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${bagel.variable} ${unbounded.variable} ${dmSans.variable} ${caveat.variable} ${jetbrainsMono.variable}`}
+      className={`${bagel.variable} ${unbounded.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >
       <body>
         <Suspense fallback={null}>

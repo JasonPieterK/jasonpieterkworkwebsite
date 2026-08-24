@@ -76,12 +76,13 @@ body {
 
 @keyframes pop-out {
   from { opacity: 1; transform: translateY(0) scale(1); }
-  to   { opacity: 0; transform: translateY(8px) scale(0.94); }
+  40%  { opacity: 0.9; transform: translateY(-4px) scale(1.015); }
+  to   { opacity: 0; transform: translateY(18px) scale(0.9); }
 }
 
 @keyframes collapse-out {
-  from { opacity: 1; transform: scaleY(1); }
-  to   { opacity: 0; transform: scaleY(0.9); }
+  from { opacity: 1; transform: scaleY(1) translateY(0); }
+  to   { opacity: 0; transform: scaleY(0.82) translateY(-8px); }
 }
 
 @keyframes slide-in-left {
@@ -164,26 +165,54 @@ main.container > *:nth-child(n + 4) { animation-delay: 220ms; }
   }
 }
 
-/* Interactive affordances — anything clickable answers back */
+/* Interactive affordances — anything clickable answers back.
+   Only transform/opacity/colour animate; nothing here triggers layout. */
 button,
 a,
 input,
+select,
 [role="button"] {
   transition:
     transform var(--dur-micro) var(--ease-bounce),
     box-shadow var(--dur-micro) var(--ease-bounce),
     background-color var(--dur-micro) var(--ease-out),
     color var(--dur-micro) var(--ease-out),
-    border-color var(--dur-micro) var(--ease-out);
+    border-color var(--dur-micro) var(--ease-out),
+    opacity var(--dur-micro) var(--ease-out);
 }
 
 button:active,
 [role="button"]:active {
-  transform: scale(0.97);
+  transform: scale(0.96);
+  transition-duration: 80ms;
+}
+
+/* Touch devices: no lingering hover states, no grey flash on tap. */
+* {
+  -webkit-tap-highlight-color: transparent;
 }
 
 :focus-visible {
   outline: 3px solid var(--median);
   outline-offset: 3px;
   border-radius: var(--r-sm);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/*
+  Mobile: same choreography, less travel and less waiting. Long staggers feel
+  broken on a small screen where everything is in view at once.
+*/
+@media (max-width: 640px) {
+  main.container > *:nth-child(n) {
+    animation-delay: 30ms;
+  }
+
+  /* Cap stagger so the last card is not still animating after a scroll. */
+  [style*="--i"] {
+    animation-delay: calc(min(var(--i, 0), 6) * 28ms) !important;
+  }
 }

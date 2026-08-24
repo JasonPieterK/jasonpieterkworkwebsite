@@ -10,16 +10,33 @@ export default function SearchBar() {
   const [value, setValue] = useState(searchParams.get("q") ?? "");
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Keep the box in step with ?q= (back/forward, or a link into /search)
+  // without an effect round-trip.
+  const urlQuery = searchParams.get("q") ?? "";
+  const [prevUrlQuery, setPrevUrlQuery] = useState(urlQuery);
+  if (urlQuery !== prevUrlQuery) {
+    setPrevUrlQuery(urlQuery);
+    setValue(urlQuery);
+  }
+
+  // A pending timer would otherwise fire after the user has clicked through to
+  // another page and yank them to /search.
   useEffect(() => {
-    setValue(searchParams.get("q") ?? "");
-  }, [searchParams]);
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
 
   function onChange(next: string) {
     setValue(next);
     if (timer.current) clearTimeout(timer.current);
     timer.current = setTimeout(() => {
-      if (next.trim()) {
-        router.push(`/search?q=${encodeURIComponent(next.trim())}`);
+      const q = next.trim();
+      if (q) {
+        router.push(`/search?q=${encodeURIComponent(q)}`);
+      } else if (window.location.pathname === "/search") {
+        // Clearing the box should clear the results, not leave stale ones up.
+        router.push("/search");
       }
     }, 300);
   }

@@ -1,14 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import type { FileEntry, SemesterGroup } from "@/lib/types";
-import { extLabel, formatBytes, formatDate } from "@/lib/utils";
+import { useDeferredValue, useMemo, useState } from "react";
+import { useHash } from "@/lib/useHash";
+import type { SemesterGroup } from "@/lib/types";
 import { SORTS, sortFiles, type SortKey } from "@/lib/sort";
-import { fileIconFor } from "@/lib/fileIcon";
 import FileCard from "./FileCard";
-import DownloadModal from "./DownloadModal";
-import StarButton from "./StarButton";
 import ZipButton from "./ZipButton";
 import styles from "./SemesterTabs.module.css";
 
@@ -17,69 +13,61 @@ type StatusFilter = "all" | "new" | "updated";
 export default function SemesterTabs({
   subjectSlug,
   semesters,
-  newestAddedPath,
-  newestUpdatedPath,
 }: {
   subjectSlug: string;
   semesters: SemesterGroup[];
-  newestAddedPath?: string;
-  newestUpdatedPath?: string;
 }) {
   const [active, setActive] = useState(0);
-  const [view, setView] = useState<"grid" | "list">("grid");
-  const [isMobile, setIsMobile] = useState(false);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("newest");
   const [query, setQuery] = useState("");
-  const searchParams = useSearchParams();
-  const focusPath = searchParams.get("file");
+  // Typing stays responsive; the (animated) grid catches up a beat later
+  // instead of remounting on every keystroke.
+  const deferredQuery = useDeferredValue(query);
+  const focusPath = useHash();
 
-  // Deep link from the command palette (?file=<path>): jump to the semester
-  // that holds it and filter down to that one file.
-  useEffect(() => {
-    if (!focusPath) return;
-    const i = semesters.findIndex((g) => g.files.some((f) => f.path === focusPath));
-    if (i === -1) return;
-    setActive(i);
-    setStatus("all");
-    setQuery(focusPath.split("/").pop() ?? "");
-  }, [focusPath, semesters]);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(max-width: 640px)");
-    setIsMobile(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setIsMobile(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-
-  const effectiveView = isMobile ? "grid" : view;
+  // Deep link from the command palette (#<path>): jump to the semester
+  // that holds it and filter down to that one file. Applied during render so
+  // the first paint already shows the right tab.
+  const [prevFocus, setPrevFocus] = useState(focusPath);
+  if (focusPath !== prevFocus) {
+    setPrevFocus(focusPath);
+    if (focusPath) {
+      const i = semesters.findIndex((g) => g.files.some((f) => f.path === focusPath));
+      if (i !== -1) {
+        setActive(i);
+        setStatus("all");
+        setQuery(focusPath.split("/").pop() ?? "");
+        // Clear it so choosing the same file again still fires a hashchange.
+        if (typeof window !== "undefined") {
+          window.history.replaceState(null, "", window.location.pathname + window.location.search);
+        }
+      }
+    }
+  }
 
   function resetFilters() {
     setStatus("all");
     setQuery("");
   }
 
-  if (semesters.length === 0) {
-    return <p className={styles.empty}>No files yet.</p>;
-  }
-  const current = semesters[active];
-
-  function bannerFor(file: FileEntry): "new" | "updated" | undefined {
-    if (file.path === newestAddedPath) return "new";
-    if (file.path === newestUpdatedPath) return "updated";
-    return undefined;
-  }
+  // `active` can point past the end for a moment after a semester list change.
+  const current = semesters[active] ?? semesters[0];
 
   const files = useMemo(() => {
+    if (!current) return [];
     const filtered = current.files.filter((f) => {
-      if (status !== "all" && bannerFor(f) !== status) return false;
-      if (query && !f.name.toLowerCase().includes(query.toLowerCase())) return false;
+      if (status !== "all" && f.badge !== status) return false;
+      if (deferredQuery && !f.name.toLowerCase().includes(deferredQuery.toLowerCase())) return false;
       return true;
     });
     return sortFiles(filtered, sort);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [current, status, query, sort, newestAddedPath, newestUpdatedPath]);
+  }, [current, status, deferredQuery, sort]);
+
+  // Every hook has run by here, so an early return is safe.
+  if (!current) {
+    return <p className={styles.empty}>No files yet.</p>;
+  }
 
   const semesterBytes = current.files.reduce((n, f) => n + f.size, 0);
 
@@ -98,24 +86,6 @@ export default function SemesterTabs({
             {s.semester}
           </button>
         ))}
-        {!isMobile && (
-          <div className={styles.viewToggle}>
-            <button
-              className={`${styles.viewBtn} ${view === "grid" ? styles.viewActive : ""}`}
-              onClick={() => setView("grid")}
-              aria-label="Grid view"
-            >
-              Grid
-            </button>
-            <button
-              className={`${styles.viewBtn} ${view === "list" ? styles.viewActive : ""}`}
-              onClick={() => setView("list")}
-              aria-label="List view"
-            >
-              List
-            </button>
-          </div>
-        )}
       </div>
 
       <div className={styles.filters}>
@@ -164,73 +134,17 @@ export default function SemesterTabs({
       </div>
 
       {files.length === 0 ? (
-        <p className={styles.empty}>No files match these filters.</p>
-      ) : effectiveView === "grid" ? (
-        <div className={styles.grid} key={`${current.semester}-${sort}`}>
-          {files.map((f, i) => (
-            <FileCard key={f.path} file={f} index={i} banner={bannerFor(f)} />
-          ))}
-        </div>
+        <p className={styles.empty} key="empty">
+          {current.files.length === 0 ? "No files yet." : "No files match these filters."}
+        </p>
       ) : (
-        <div className={styles.listWrap} key={`${current.semester}-${sort}`}>
-          <table className={styles.list}>
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Type</th>
-                <th>Size</th>
-                <th>Release date</th>
-                <th>Date modified</th>
-                <th>Commit note</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {files.map((f) => {
-                const modified = f.lastCommitDate !== f.firstCommitDate ? formatDate(f.lastCommitDate) : "–";
-                const banner = bannerFor(f);
-                const Icon = fileIconFor(f.name);
-                return (
-                  <tr key={f.path}>
-                    <td>
-                      <div className={styles.listName}>
-                        <Icon size={18} weight="bold" className={styles.listIcon} aria-hidden="true" />
-                        {f.name}
-                        {banner && (
-                          <span
-                            className={`${styles.listBadge} ${banner === "new" ? styles.badgeNew : styles.badgeUpdated}`}
-                          >
-                            {banner === "new" ? "New" : "Updated"}
-                          </span>
-                        )}
-                      </div>
-                    </td>
-                    <td data-label="Type" className={styles.listMono}>
-                      {extLabel(f.name)}
-                    </td>
-                    <td data-label="Size" className={styles.listMono}>
-                      {formatBytes(f.size) || "–"}
-                    </td>
-                    <td data-label="Release date" title={f.firstCommitDate}>
-                      {f.firstCommitDate ? formatDate(f.firstCommitDate) : "–"}
-                    </td>
-                    <td data-label="Date modified" title={f.lastCommitDate}>
-                      {modified}
-                    </td>
-                    <td className={styles.listNote} data-label="Commit note">
-                      {f.lastCommitMessage || "–"}
-                    </td>
-                    <td>
-                      <div className={styles.listActions}>
-                        <StarButton path={f.path} label={f.name} />
-                        <DownloadModal file={f} />
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+        <div
+          className={styles.grid}
+          key={`${current.semester}-${sort}-${status}-${deferredQuery}`}
+        >
+          {files.map((f, i) => (
+            <FileCard key={f.path} file={f} index={i} banner={f.badge ?? undefined} />
+          ))}
         </div>
       )}
     </div>

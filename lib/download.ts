@@ -7,10 +7,12 @@ export async function downloadWithProgress(
   url: string,
   fallbackName: string,
   onProgress: (pct: number | null, receivedBytes: number) => void,
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  onResponse?: (res: Response) => void
 ): Promise<void> {
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`Download failed (${res.status})`);
+  onResponse?.(res);
 
   const filename = filenameFrom(res.headers.get("content-disposition")) ?? fallbackName;
   const total = Number(res.headers.get("content-length")) || 0;
@@ -42,9 +44,10 @@ export async function downloadWithProgress(
   document.body.appendChild(a);
   a.click();
   a.remove();
-  // ponytail: fixed delay instead of tracking the save dialog — Safari needs
-  // the URL alive past the click, and nothing here is long-lived.
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 10_000);
+  // ponytail: fixed delay instead of tracking the save dialog. Generous on
+  // purpose — with "always ask where to save" enabled, revoking after a few
+  // seconds produces a failed or 0-byte file while the dialog is still open.
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
 }
 
 function filenameFrom(header: string | null): string | null {

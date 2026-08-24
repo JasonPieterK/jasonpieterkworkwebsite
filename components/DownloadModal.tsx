@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   ArrowSquareOut,
   CaretDown,
+  FilePdf,
   CheckCircle,
   DownloadSimple,
   Eye,
@@ -14,12 +15,15 @@ import {
 } from "@phosphor-icons/react";
 import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate } from "@/lib/utils";
-import { fileIconFor } from "@/lib/fileIcon";
+import FileIcon from "./FileIcon";
 import { getInlinePreview } from "@/lib/preview";
 import { rawUrlFor } from "@/lib/repoLinks";
 import { downloadWithProgress } from "@/lib/download";
 import { confettiScreen } from "@/lib/confetti";
+import { canRenderDocx, printDocxAsPdf, type RenderStage } from "@/lib/docxRender";
+import DocxPreview from "./DocxPreview";
 import { useExitAnimation } from "@/lib/useExitAnimation";
+import { useIsClient } from "@/lib/useIsClient";
 import styles from "./DownloadModal.module.css";
 
 type Version = { sha: string; date: string; message: string };
@@ -33,37 +37,38 @@ type DownloadState = {
 const IDLE: DownloadState = { status: "idle", pct: null, bytes: 0 };
 
 export default function DownloadModal({ file }: { file: FileEntry }) {
+  const mounted = useIsClient();
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [versions, setVersions] = useState<Version[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selected, setSelected] = useState<Version | null>(null);
   const [warnOpen, setWarnOpen] = useState(false);
   const [dl, setDl] = useState<DownloadState>(IDLE);
+  const [pdf, setPdf] = useState<{ stage: RenderStage | null; error?: string }>({ stage: null });
   const [showPreview, setShowPreview] = useState(false);
-  const shell = useExitAnimation(open, 220);
-  const warnShell = useExitAnimation(warnOpen, 220);
-  const dropdownShell = useExitAnimation(pickerOpen, 160);
-  const previewShell = useExitAnimation(showPreview, 200);
+  const shell = useExitAnimation(open, 280);
+  const warnShell = useExitAnimation(warnOpen, 280);
+  const dropdownShell = useExitAnimation(pickerOpen, 180);
+  const previewShell = useExitAnimation(showPreview, 240);
   const pickerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
-  const Icon = fileIconFor(file.name);
-
-  useEffect(() => setMounted(true), []);
 
   const latest: Version = useMemo(
     () => ({ sha: "", date: file.lastCommitDate, message: file.lastCommitMessage }),
     [file.lastCommitDate, file.lastCommitMessage]
   );
 
-  useEffect(() => {
-    if (!open) return;
+  function openModal() {
     setSelected(latest);
     setPickerOpen(false);
     setDl(IDLE);
     setShowPreview(false);
-    if (versions === null) {
+    setOpen(true);
+
+    // Version history is fetched once, on first open — a click is the trigger,
+    // so it belongs here rather than in an effect watching `open`.
+    if (versions === null && !loading) {
       setLoading(true);
       fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
         .then((r) => r.json())
@@ -71,17 +76,20 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
         .catch(() => setVersions([]))
         .finally(() => setLoading(false));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
+  }
 
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key !== "Escape") return;
+      // The warning dialog sits on top; Escape should dismiss that first
+      // rather than pulling the modal out from under it.
+      if (warnOpen) setWarnOpen(false);
+      else setOpen(false);
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [open, warnOpen]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -133,7 +141,29 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     }
   }
 
+  async function exportPdf() {
+    if (pdf.stage) return;
+    setPdf({ stage: "fetching" });
+    window.dispatchEvent(new Event("progress:start"));
+    try {
+      await printDocxAsPdf(selectedRawUrl, file.name, (stage) => setPdf({ stage }));
+      setPdf({ stage: null });
+    } catch (err) {
+      setPdf({ stage: null, error: err instanceof Error ? err.message : "Could not build the PDF" });
+    } finally {
+      window.dispatchEvent(new Event("progress:done"));
+    }
+  }
+
   const working = dl.status === "working";
+  const pdfLabel =
+    pdf.stage === "fetching"
+      ? "Fetching…"
+      : pdf.stage === "rendering"
+        ? "Laying out…"
+        : pdf.stage === "opening"
+          ? "Opening…"
+          : "Save as PDF";
 
   const progressBlock = (
     <>
@@ -176,7 +206,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
 
   return (
     <>
-      <button type="button" className="mmm-btn mmm-btn--ghost" onClick={() => setOpen(true)}>
+      <button type="button" className="mmm-btn mmm-btn--ghost" onClick={openModal}>
         Open
       </button>
       {shell.mounted &&
@@ -190,11 +220,14 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
               className={`${styles.modal} ${showPreview ? styles.modalWide : ""} ${
                 shell.closing ? styles.modalClosing : ""
               }`}
+              role="dialog"
+              aria-modal="true"
+              aria-label={`${file.name} — download options`}
             >
               <div className={styles.header}>
                 <div className={styles.headerTitle}>
                   <span className={styles.iconBadge}>
-                    <Icon size={22} weight="bold" aria-hidden="true" />
+                    <FileIcon name={file.name} size={22} weight="bold" aria-hidden="true" />
                   </span>
                   <h3 className={styles.name}>{file.name}</h3>
                 </div>
@@ -210,16 +243,19 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                   <span className={styles.metaDate}>{formatDate(file.lastCommitDate)}</span>
                 </div>
 
-                {previewShell.mounted && preview && (
+                {previewShell.mounted && (preview || canRenderDocx(file.name)) && (
                   <div
                     className={`${styles.previewBox} ${previewShell.closing ? styles.previewClosing : ""}`}
                   >
-                    {preview.kind === "image" ? (
+                    {canRenderDocx(file.name) ? (
+                      <DocxPreview url={selectedRawUrl} name={file.name} />
+                    ) : preview?.kind === "image" ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={preview.url} alt={file.name} className={styles.previewImg} />
                     ) : (
-                      <iframe src={preview.url} title={`Preview of ${file.name}`} className={styles.previewFrame} />
+                      <iframe src={preview!.url} title={`Preview of ${file.name}`} className={styles.previewFrame} />
                     )}
+                    {preview && !canRenderDocx(file.name) && (
                     <a
                       href={preview.url}
                       target="_blank"
@@ -228,6 +264,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                     >
                       <ArrowSquareOut size={13} weight="bold" /> Open in new tab
                     </a>
+                    )}
                   </div>
                 )}
 
@@ -235,7 +272,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                 <div className={styles.picker} ref={pickerRef}>
                   <button type="button" className={styles.pickerTrigger} onClick={() => setPickerOpen((v) => !v)}>
                     <span className={styles.pickerText}>
-                      {selected === latest ? "Latest" : selected ? formatDate(selected.date) : "Latest"}
+                      {!selected?.sha ? "Latest" : formatDate(selected.date)}
                       {selected?.message && <span className={styles.pickerMsg}> · {selected.message}</span>}
                     </span>
                     <CaretDown
@@ -250,7 +287,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                     >
                       <button
                         type="button"
-                        className={`${styles.option} ${selected === latest ? styles.optionActive : ""}`}
+                        className={`${styles.option} ${!selected?.sha ? styles.optionActive : ""}`}
                         onClick={() => {
                           setSelected(latest);
                           setPickerOpen(false);
@@ -289,7 +326,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                 </div>
 
                 <div className={styles.actionRow}>
-                  {preview && (
+                  {(preview || canRenderDocx(file.name)) && (
                     <button
                       type="button"
                       className={`mmm-btn mmm-btn--ghost ${styles.actionBtn}`}
@@ -311,6 +348,24 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                   </button>
                 </div>
 
+                {canRenderDocx(file.name) && (
+                  <button
+                    type="button"
+                    className={`mmm-btn mmm-btn--ghost ${styles.pdfBtn}`}
+                    onClick={exportPdf}
+                    disabled={Boolean(pdf.stage)}
+                    title="Convert this Word file to PDF in your browser and open the print dialog"
+                  >
+                    <FilePdf size={18} weight="bold" className={pdf.stage ? styles.bouncing : undefined} />
+                    {pdfLabel}
+                  </button>
+                )}
+                {pdf.error && (
+                  <p className={styles.errorText}>
+                    <WarningCircle size={14} weight="bold" /> {pdf.error}
+                  </p>
+                )}
+
                 {progressBlock}
               </div>
             </div>
@@ -328,6 +383,9 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
             <div
               className={`${styles.modal} ${warnShell.closing ? styles.modalClosing : ""}`}
               style={{ maxWidth: 420 }}
+              role="alertdialog"
+              aria-modal="true"
+              aria-label="Not the latest version"
             >
               <div className={styles.header}>
                 <div className={styles.headerTitle}>

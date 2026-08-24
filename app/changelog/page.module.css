@@ -1,0 +1,281 @@
+.head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--s-4);
+  padding: var(--s-7) 0 var(--s-5);
+}
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ash);
+  margin: 0 0 var(--s-2);
+}
+
+.title {
+  font-family: var(--font-hero);
+  font-weight: 400;
+  font-size: clamp(40px, 7vw, 76px);
+  line-height: 0.95;
+  margin: 0;
+}
+
+.lede {
+  margin: var(--s-3) 0 0;
+  max-width: 46ch;
+  font-size: var(--fs-small);
+  color: var(--ash);
+}
+
+.ghBtn {
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 15px;
+  padding: 12px 20px;
+}
+
+.empty {
+  color: var(--ash);
+  padding: var(--s-8) 0;
+  text-align: center;
+}
+
+/* ---------- timeline ---------- */
+
+.timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 var(--s-9);
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-6);
+}
+
+.day {
+  position: relative;
+  animation: rise-in var(--dur-big) var(--ease-out) backwards;
+  animation-delay: calc(var(--d, 0) * 60ms + 80ms);
+}
+
+.dayHead {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-3);
+  margin-bottom: var(--s-3);
+  padding-bottom: var(--s-2);
+  border-bottom: var(--bw-thin) solid var(--border-soft);
+}
+
+.dayDate {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h4);
+}
+
+.dayAgo {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-3);
+  padding-left: var(--s-5);
+  border-left: var(--bw-thin) dashed var(--border-soft);
+}
+
+.entry {
+  position: relative;
+  background: var(--bg-1);
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-md);
+  box-shadow: var(--sh-1);
+  padding: var(--s-4);
+  animation: slide-in-left var(--dur-big) var(--ease-out) backwards;
+  animation-delay: calc(var(--i, 0) * 45ms + 120ms);
+  transition:
+    transform var(--dur-std) var(--ease-bounce),
+    box-shadow var(--dur-std) var(--ease-bounce);
+}
+
+/* Timeline node sitting on the dashed rail */
+.dot {
+  position: absolute;
+  left: calc(var(--s-5) * -1 - 6px);
+  top: 22px;
+  width: 11px;
+  height: 11px;
+  border-radius: var(--r-pill);
+  background: var(--median);
+  border: var(--bw-thin) solid var(--ink);
+  transition: transform var(--dur-std) var(--ease-bounce);
+}
+
+.entryHead {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.badge {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 10px;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--bone);
+}
+.added { background: var(--mode); }
+.updated { background: var(--sun); }
+.removed { background: var(--coral); color: var(--paper); }
+.renamed { background: var(--median-50); }
+
+.entryTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  margin: 0;
+  word-break: break-word;
+}
+
+.scope {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+  margin: var(--s-2) 0 0;
+}
+
+.changes {
+  list-style: none;
+  margin: var(--s-3) 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.change {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ash);
+  min-width: 0;
+}
+
+.changeExt {
+  flex-shrink: 0;
+  min-width: 42px;
+  text-align: center;
+  font-size: 9px;
+  letter-spacing: var(--tracking-caps);
+  color: var(--ink);
+  background: var(--bone);
+  border-radius: var(--r-pill);
+  padding: 1px 6px;
+}
+
+.changeVerb {
+  flex-shrink: 0;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.changePath {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sha {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: var(--s-3);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ash);
+  border: var(--bw-thin) solid var(--border-soft);
+  border-radius: var(--r-pill);
+  padding: 3px 10px;
+}
+
+.back {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  color: var(--median);
+  padding-bottom: var(--s-8);
+}
+
+@media (hover: hover) {
+  .entry:hover {
+    transform: translateX(4px);
+    box-shadow: var(--sh-2);
+  }
+  .entry:hover .dot {
+    transform: scale(1.35);
+  }
+  .sha:hover {
+    background: var(--bone);
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .back:hover {
+    transform: translateX(-4px);
+    text-decoration: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .head {
+    padding-top: var(--s-6);
+  }
+  .ghBtn {
+    width: 100%;
+    justify-content: center;
+  }
+  .entries {
+    padding-left: var(--s-4);
+  }
+  .dot {
+    left: calc(var(--s-4) * -1 - 6px);
+  }
+  .entry {
+    padding: var(--s-3);
+  }
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}

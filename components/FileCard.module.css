@@ -71,9 +71,7 @@
   padding: 2px 8px;
   transition: background var(--dur-micro) var(--ease-out);
 }
-.card:hover .chip {
-  background: var(--median-50);
-}
+
 
 .date {
   font-family: var(--font-mono);
@@ -103,10 +101,21 @@
 
 /* ---------- motion ---------- */
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--sh-2);
-  border-color: var(--median);
+@media (hover: hover) {
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--sh-2);
+    border-color: var(--median);
+  }
+  .card:hover .fileIcon {
+    transform: scale(1.18) rotate(-6deg);
+  }
+  .card:hover .chip {
+    background: var(--median-50);
+  }
+  .viewLink:hover::after {
+    transform: scaleX(1);
+  }
 }
 .card {
   transition: transform var(--dur-std) var(--ease-bounce),
@@ -117,14 +126,6 @@
 .fileIcon {
   transition: transform var(--dur-std) var(--ease-bounce);
 }
-.card:hover .fileIcon {
-  transform: scale(1.18) rotate(-6deg);
-}
-
-.card:hover .banner {
-  animation: pop var(--dur-std) var(--ease-bounce);
-}
-
 .viewLink {
   position: relative;
 }
@@ -143,9 +144,6 @@
 .viewLink:hover {
   text-decoration: none;
 }
-.viewLink:hover::after {
-  transform: scaleX(1);
-}
 
 @supports (animation-timeline: view()) {
   @media (prefers-reduced-motion: no-preference) {
@@ -155,5 +153,23 @@
       animation-range: entry 0% cover 18%;
       animation-delay: 0s;
     }
+  }
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
   }
 }

@@ -11,3 +11,7 @@ export function githubTreeUrl(subjectName: string, semester?: string): string {
 export function rawUrlFor(path: string, ref: string = BRANCH): string {
   return `https://raw.githubusercontent.com/${OWNER}/${REPO}/${ref}/${encodeURI(path)}`;
 }
+
+export function blobUrlFor(path: string, ref: string = BRANCH): string {
+  return `https://github.com/${OWNER}/${REPO}/blob/${ref}/${encodeURI(path)}`;
+}

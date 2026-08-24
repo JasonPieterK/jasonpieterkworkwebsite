@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "@/lib/repoLinks";
+import { OWNER, REPO, BRANCH } from "@/lib/repoLinks";
+import { isSafeRef, isSafeRepoPath } from "@/lib/validate";
 
 export const revalidate = 3600;
 
@@ -24,8 +25,10 @@ export async function GET(req: NextRequest) {
   const path = req.nextUrl.searchParams.get("path");
   const sha = req.nextUrl.searchParams.get("sha") || BRANCH;
   if (!path) return NextResponse.json({ error: "path required" }, { status: 400 });
-  // Only ever serve files from this repo's materials root.
-  if (!path.startsWith(ROOT_PREFIX) || path.includes("..")) {
+
+  // `sha` is interpolated into the URL exactly like `path`, so it needs the
+  // same guard — otherwise ".." in the ref escapes to any public repo.
+  if (!isSafeRepoPath(path) || !isSafeRef(sha)) {
     return NextResponse.json({ error: "forbidden path" }, { status: 403 });
   }
 
@@ -45,6 +48,11 @@ export async function GET(req: NextRequest) {
       "Content-Disposition": "inline",
       "Content-Length": String(body.byteLength),
       "Cache-Control": "public, max-age=3600",
+      "X-Content-Type-Options": "nosniff",
+      // An SVG served inline from this origin would otherwise be a script
+      // execution vector; the sandbox neutralises scripts in anything served
+      // here without affecting <img>/<iframe> rendering of real documents.
+      "Content-Security-Policy": "default-src 'none'; img-src 'self' data:; style-src 'unsafe-inline'; sandbox",
     },
   });
 }

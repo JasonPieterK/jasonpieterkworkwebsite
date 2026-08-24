@@ -180,7 +180,9 @@
 .optionTag {
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
-  font-weight: 700;
+  /* 500 is the heaviest weight loaded for the mono family; 700 would be
+     synthesised by the browser. */
+  font-weight: 500;
   color: var(--ink);
 }
 
@@ -224,14 +226,12 @@
   color: var(--ink);
 }
 
-@keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-@keyframes pop-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
+/*
+  fade-in / pop-in live in globals.css on purpose. Defining them here would make
+  CSS Modules scope every animation-name in this file, including the exit
+  keyframes (pop-out, fade-out, collapse-out) that are only declared globally —
+  silently turning every closing animation into a no-op.
+*/
 
 /* ---------- download progress ---------- */
 
@@ -328,9 +328,28 @@
 
 .modal {
   transition: max-width var(--dur-big) var(--ease-bounce);
+  will-change: transform, opacity;
 }
-.modalWide {
-  max-width: 820px;
+.modal.modalWide {
+  max-width: 940px;
+}
+
+/*
+  The modal must never exceed the viewport: with a document preview open its
+  natural height easily passes a laptop screen, pushing the action buttons off
+  the bottom with no way to scroll to them.
+*/
+.modal {
+  max-height: 92dvh;
+  display: flex;
+  flex-direction: column;
+}
+.body {
+  min-height: 0;
+  overflow-y: auto;
+}
+.header {
+  flex-shrink: 0;
 }
 
 .fileMeta {
@@ -370,7 +389,7 @@
 .previewFrame {
   display: block;
   width: 100%;
-  height: min(62vh, 560px);
+  height: min(70vh, 700px);
   border: none;
   background: var(--white);
 }
@@ -408,12 +427,14 @@
 /* ---------- closing animations ---------- */
 
 .overlayClosing {
-  animation: fade-out var(--dur-std) var(--ease-in) forwards;
+  animation: fade-out 260ms var(--ease-out) forwards;
   pointer-events: none;
 }
 
 .modalClosing {
-  animation: pop-out var(--dur-std) var(--ease-in) forwards;
+  animation: pop-out 280ms var(--ease-in) forwards;
+  /* Cancel the max-width transition so the panel does not resize mid-exit. */
+  transition: none;
 }
 
 /* The inline preview folds away instead of vanishing */
@@ -422,11 +443,161 @@
 }
 
 .dropdownClosing {
-  animation: pop-out 160ms var(--ease-in) forwards;
+  animation: pop-out 180ms var(--ease-in) forwards;
   pointer-events: none;
 }
 
 .previewClosing {
-  animation: collapse-out 200ms var(--ease-in) forwards;
+  animation: collapse-out 240ms var(--ease-in) forwards;
+  transform-origin: top center;
   pointer-events: none;
+}
+
+/* ---------- mobile ---------- */
+
+@media (max-width: 640px) {
+  .overlay {
+    padding: var(--s-3);
+    align-items: flex-end; /* sheet-style: reachable with a thumb */
+  }
+  .modal {
+    max-width: 100%;
+  }
+
+  /*
+    Reading a document in a 380px card is useless. With the preview open the
+    modal becomes a near-fullscreen sheet and the document gets every pixel
+    that is not a control.
+  */
+  .modal.modalWide {
+    max-width: 100%;
+    height: 94dvh;
+    max-height: 94dvh;
+    display: flex;
+    flex-direction: column;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+  }
+  .modal.modalWide .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+  /* The document pane grows into whatever the controls do not use. Each link
+     in the chain needs to be a flex item that may shrink, or the scroller
+     falls back to its content height and the sheet is half empty. */
+  .modal.modalWide .previewBox {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal.modalWide .fileMeta,
+  .modal.modalWide .label,
+  .modal.modalWide .picker {
+    display: none; /* the version picker is a tap away once the preview closes */
+  }
+
+  /* With the preview open, every pixel of chrome is a pixel of document lost. */
+  .modal.modalWide .body {
+    padding: var(--s-2) var(--s-3) var(--s-3);
+    gap: var(--s-2);
+  }
+  .modal.modalWide .header {
+    padding: var(--s-2) var(--s-3);
+  }
+  .modal.modalWide .actionBtn {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+  .modal.modalWide .pdfBtn {
+    margin-top: 0;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .closeBtn {
+    width: 40px;
+    height: 40px;
+  }
+  .actionBtn {
+    padding: 14px 16px;
+  }
+  .actionRow {
+    flex-wrap: wrap;
+  }
+  .previewFrame,
+  .previewImg {
+    height: 74dvh;
+    max-height: 74dvh;
+  }
+  .body,
+  .header {
+    padding: var(--s-4);
+  }
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes collapse-out {
+  from { opacity: 1; transform: scaleY(1) translateY(0); }
+  to   { opacity: 0; transform: scaleY(0.82) translateY(-8px); }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%) scaleX(0.4); }
+  50%  { transform: translateX(20%)   scaleX(0.7); }
+  100% { transform: translateX(100%)  scaleX(0.4); }
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pop-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  40%  { opacity: 0.9; transform: translateY(-4px) scale(1.015); }
+  to   { opacity: 0; transform: translateY(18px) scale(0.9); }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-7deg); }
+  75%      { transform: rotate(7deg); }
 }

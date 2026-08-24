@@ -1,4 +1,4 @@
-import type { ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
+import type { ChangelogEntry, ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 
 // Fallback TTL — the GitHub webhook (app/api/revalidate) triggers instant
@@ -23,7 +23,12 @@ async function ghFetch<T>(url: string): Promise<T> {
     },
     next: { revalidate: REVALIDATE_SECONDS },
   });
-  if (res.status === 403 && res.headers.get("x-ratelimit-remaining") === "0") {
+  // Secondary/abuse limits answer 403 with a non-zero remaining, or 429.
+  const throttled =
+    res.status === 429 ||
+    (res.status === 403 &&
+      (res.headers.get("x-ratelimit-remaining") === "0" || res.headers.has("retry-after")));
+  if (throttled) {
     throw new RateLimitError(`GitHub API rate limit hit for ${url}`);
   }
   if (!res.ok) {
@@ -42,19 +47,26 @@ type CommitDetail = CommitListItem & {
 };
 
 function toChangeKind(status: string): ChangeKind {
-  return status === "added" ? "added" : "modified";
+  // GitHub reports "renamed"/"copied" against the new filename, which is a
+  // path nobody has seen before — treat it as an addition so the card is
+  // badged "New" rather than implying the contents changed.
+  return status === "added" || status === "renamed" || status === "copied" ? "added" : "modified";
 }
 
 async function fetchTree(): Promise<GithubTreeItem[]> {
   const data = await ghFetch<{ tree: GithubTreeItem[]; truncated: boolean }>(
     `https://api.github.com/repos/${OWNER}/${REPO}/git/trees/${BRANCH}?recursive=1`
   );
+  if (data.truncated) {
+    // GitHub caps recursive trees; past that point files are missing with no
+    // other signal, so at least make it visible in the logs.
+    console.warn("GitHub tree response was truncated — some files will be missing from the portal");
+  }
   return data.tree.filter((t) => t.path.startsWith(ROOT_PREFIX));
 }
 
 type FileCommitInfo = {
   date: string;
-  firstDate: string;
   message: string;
   changeKind: ChangeKind;
   commitIndex: number;
@@ -79,8 +91,13 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
   const BATCH_SIZE = 10; // fetch commit details concurrently in small batches —
   // sequential awaits here made subject pages take 10+s on a cold cache.
 
+  // Count only the files we actually care about. `map` also accumulates
+  // deleted paths, renames and repo-root files, so comparing map.size against
+  // knownPaths.size stopped the walk early and left real files dateless.
+  let resolved = 0;
+
   for (let start = 0; start < commits.length; start += BATCH_SIZE) {
-    if (map.size >= knownPaths.size) break;
+    if (resolved >= knownPaths.size) break;
     const batch = commits.slice(start, start + BATCH_SIZE);
     const results = await Promise.allSettled(
       batch.map((c) => ghFetch<CommitDetail>(`https://api.github.com/repos/${OWNER}/${REPO}/commits/${c.sha}`))
@@ -99,15 +116,13 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
       for (const f of detail.files ?? []) {
         const existing = map.get(f.filename);
         if (!existing) {
+          if (knownPaths.has(f.filename)) resolved += 1;
           map.set(f.filename, {
             date,
-            firstDate: date,
             message,
             changeKind: toChangeKind(f.status),
             commitIndex: i,
           });
-        } else {
-          existing.firstDate = date; // this commit is older (walked newest-first)
         }
       }
     });
@@ -118,7 +133,12 @@ async function fetchLastCommitPerFile(knownPaths: Set<string>): Promise<Map<stri
 }
 
 function subjectSlug(name: string): string {
-  return name.toLowerCase().replace(/\s+/g, "-");
+  // Anything that is not URL-safe would break /subject/[name] and the sitemap.
+  const base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+  return base || "subject";
 }
 
 export async function getSubjects(): Promise<Subject[]> {
@@ -144,6 +164,7 @@ export async function getSubjects(): Promise<Subject[]> {
         fileCount: 0,
         newestAdded: null,
         newestUpdated: null,
+        metaIncomplete: false,
       });
     }
     return subjectMap.get(slug)!;
@@ -188,32 +209,39 @@ export async function getSubjects(): Promise<Subject[]> {
     const commitInfo = commitMap.get(item.path);
     const lastCommitDate = commitInfo?.date ?? "";
 
+    const withinBadgeWindow = Boolean(commitInfo && commitInfo.commitIndex < BADGE_COMMIT_WINDOW);
+    const badge: FileEntry["badge"] =
+      lastCommitDate && withinBadgeWindow ? (commitInfo!.changeKind === "added" ? "new" : "updated") : null;
+
     const entry: FileEntry = {
       path: item.path,
       name: fileName,
       downloadUrl: `https://raw.githubusercontent.com/${OWNER}/${REPO}/${BRANCH}/${encodeURI(item.path)}`,
       htmlUrl: `https://github.com/${OWNER}/${REPO}/blob/${BRANCH}/${encodeURI(item.path)}`,
       lastCommitDate,
-      firstCommitDate: commitInfo?.firstDate ?? lastCommitDate,
       lastCommitMessage: commitInfo?.message ?? "",
-      changeKind: commitInfo?.changeKind ?? "modified",
       size: item.size ?? 0,
+      badge,
     };
 
     const semGroup = getSemesterGroup(subject, semesterName);
     semGroup.files.push(entry);
     subject.fileCount += 1;
 
-    const withinBadgeWindow = Boolean(commitInfo && commitInfo.commitIndex < BADGE_COMMIT_WINDOW);
-    if (lastCommitDate && withinBadgeWindow) {
-      const slot = entry.changeKind === "added" ? "newestAdded" : "newestUpdated";
+    if (badge) {
+      const slot = badge === "new" ? "newestAdded" : "newestUpdated";
       if (!subject[slot] || lastCommitDate > subject[slot]!.lastCommitDate) {
         subject[slot] = entry;
       }
     }
   }
 
+  // No commit data at all means the commit lookup failed; the files still
+  // render, but with no dates, badges or meaningful "newest first" order.
+  const metaIncomplete = commitMap.size === 0 && blobPaths.size > 0;
+
   const subjects = Array.from(subjectMap.values());
+  for (const s of subjects) s.metaIncomplete = metaIncomplete;
   for (const s of subjects) {
     s.semesters.sort((a, b) => a.semester.localeCompare(b.semester));
     for (const g of s.semesters) {
@@ -227,4 +255,56 @@ export async function getSubjects(): Promise<Subject[]> {
 export async function getSubject(slug: string): Promise<Subject | undefined> {
   const subjects = await getSubjects();
   return subjects.find((s) => s.slug === slug);
+}
+
+/**
+ * Recent commits, parsed into changelog entries.
+ *
+ * Commit messages follow "Added|Updated|Removed <file>" with an optional
+ * scope line and "- verb: path" bullets; anything that does not match still
+ * renders, just without the extra detail.
+ */
+export async function getChangelog(limit = 60): Promise<ChangelogEntry[]> {
+  let commits: CommitListItem[];
+  try {
+    commits = await ghFetch<CommitListItem[]>(
+      `https://api.github.com/repos/${OWNER}/${REPO}/commits?per_page=${Math.min(limit, 100)}`
+    );
+  } catch (err) {
+    console.error("Failed to load changelog", err);
+    return [];
+  }
+
+  return commits.map((c) => {
+    const lines = c.commit.message.split("\n");
+    const title = lines[0].trim();
+    const action = /^(Added|Updated|Removed|Renamed|Merge|Initial)/.exec(title)?.[1] ?? "";
+
+    const scopeLine = lines.find((l) => / under .+\.$/.test(l.trim()));
+    const scope = scopeLine ? scopeLine.trim().replace(/^.* under /, "").replace(/\.$/, "") : "";
+
+    const changes = lines
+      .filter((l) => l.trim().startsWith("- "))
+      .map((l) => {
+        const text = l.trim().slice(2);
+        const [verb, ...rest] = text.split(": ");
+        const path = rest.join(": ").trim();
+        return {
+          verb: path ? verb.trim() : "",
+          path: path || text,
+          name: (path || text).split("/").pop() ?? text,
+        };
+      });
+
+    return {
+      sha: c.sha,
+      shortSha: c.sha.slice(0, 7),
+      date: c.commit.author.date,
+      title,
+      action,
+      scope,
+      changes,
+      htmlUrl: `https://github.com/${OWNER}/${REPO}/commit/${c.sha}`,
+    };
+  });
 }

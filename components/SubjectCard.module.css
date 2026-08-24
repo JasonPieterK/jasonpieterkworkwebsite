@@ -97,61 +97,59 @@
 
 /* ---------- motion ---------- */
 
-/* Light sweep across the card on hover */
+/*
+  Light sweep across the card on hover. Translating a wide gradient layer is a
+  compositor-only job; animating background-position repaints every frame.
+*/
 .card::after {
   content: "";
   position: absolute;
-  inset: 0;
+  top: 0;
+  bottom: 0;
+  left: -60%;
+  width: 55%;
   pointer-events: none;
   background: linear-gradient(
     115deg,
-    transparent 35%,
-    rgba(255, 255, 255, 0.55) 50%,
-    transparent 65%
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
   );
-  background-size: 250% 100%;
-  background-position: 150% 0;
   opacity: 0;
-  transition: background-position var(--dur-big) var(--ease-out),
-    opacity var(--dur-micro) var(--ease-out);
-}
-.card:hover::after {
-  opacity: 1;
-  background-position: -50% 0;
-}
-
-.card:hover {
-  transform: rotate(0deg) translateY(-6px) scale(1.02);
-  box-shadow: var(--sh-4);
-}
-.card:active {
-  transform: rotate(0deg) translateY(-1px) scale(0.99);
-  box-shadow: var(--sh-1);
+  transform: translate3d(0, 0, 0);
+  transition: transform 620ms var(--ease-out), opacity var(--dur-micro) linear;
 }
 
 .iconBadge {
-  transition: transform var(--dur-std) var(--ease-bounce),
-    box-shadow var(--dur-std) var(--ease-bounce);
+  transition: transform var(--dur-std) var(--ease-bounce);
 }
-.card:hover .iconBadge {
-  transform: rotate(-8deg) scale(1.1);
+
+.count {
+  transition: color var(--dur-micro) var(--ease-out);
+}
+
+@media (hover: hover) {
+  .card:hover::after {
+    opacity: 1;
+    transform: translate3d(320%, 0, 0);
+  }
+  .card:hover {
+    transform: rotate(0deg) translateY(-6px) scale(1.02);
+    box-shadow: var(--sh-4);
+  }
+  .card:hover .iconBadge {
+    transform: rotate(-8deg) scale(1.1);
+  }
+  .card:hover .count {
+    color: var(--ink);
+  }
+}
+
+/* Press feedback matters more than hover on touch. */
+.card:active {
+  transform: rotate(0deg) translateY(-1px) scale(0.985);
   box-shadow: var(--sh-1);
-}
-
-.name {
-  transition: letter-spacing var(--dur-std) var(--ease-out);
-}
-.card:hover .name {
-  letter-spacing: 0.005em;
-}
-
-.card:hover .count {
-  color: var(--ink);
-}
-
-/* Banner text scrolls its filename into view on hover */
-.card:hover .bannerFile {
-  animation: float 1.2s var(--ease-out) infinite;
+  transition-duration: 90ms;
 }
 
 /* Replay the entrance as cards scroll into view (Chrome/Edge). */

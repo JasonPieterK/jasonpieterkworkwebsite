@@ -9,10 +9,9 @@ const file = (name: string, date: string, size: number): FileEntry => ({
   downloadUrl: "",
   htmlUrl: "",
   lastCommitDate: date,
-  firstCommitDate: date,
   lastCommitMessage: "",
-  changeKind: "modified",
   size,
+  badge: null,
 });
 
 const files = [

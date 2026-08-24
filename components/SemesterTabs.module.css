@@ -6,32 +6,6 @@
   margin-bottom: var(--s-4);
 }
 
-.viewToggle {
-  display: flex;
-  margin-left: auto;
-  border: var(--bw-thin) solid var(--ink);
-  border-radius: var(--r-pill);
-  overflow: hidden;
-}
-
-.viewBtn {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 13px;
-  padding: 8px 16px;
-  border: none;
-  background: var(--paper);
-  color: var(--ink);
-  cursor: pointer;
-}
-.viewBtn + .viewBtn {
-  border-left: var(--bw-thin) solid var(--ink);
-}
-.viewActive {
-  background: var(--median);
-  color: var(--paper);
-}
-
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -55,6 +29,7 @@
   color: var(--ink);
   cursor: pointer;
 }
+
 .pillActive {
   background: var(--mode);
 }
@@ -83,19 +58,11 @@
   color: var(--ink);
   cursor: pointer;
 }
-.sort:hover {
-  background: var(--median-50);
-}
+
+
 
 .zipSlot {
   margin-left: auto;
-}
-
-.listMono {
-  font-family: var(--font-mono);
-  font-size: var(--fs-micro);
-  color: var(--ash);
-  white-space: nowrap;
 }
 
 .search {
@@ -107,85 +74,6 @@
   background: var(--paper);
   color: var(--ink);
   min-width: 180px;
-}
-
-.listWrap {
-  border: var(--bw-thin) solid var(--ink);
-  border-radius: var(--r-md);
-  overflow: hidden;
-  overflow-x: auto;
-}
-
-.list {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--fs-small);
-}
-
-.list th,
-.list td {
-  border: none;
-}
-
-.list th {
-  text-align: left;
-  font-family: var(--font-mono);
-  font-size: var(--fs-micro);
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-caps);
-  color: var(--ash);
-  background: var(--bone);
-  padding: var(--s-3) var(--s-4);
-  white-space: nowrap;
-}
-
-.list td {
-  padding: var(--s-3) var(--s-4);
-  border-top: var(--bw-thin) solid var(--ink);
-  vertical-align: middle;
-}
-
-.listName {
-  display: flex;
-  align-items: center;
-  gap: var(--s-2);
-  font-weight: 700;
-  word-break: break-word;
-}
-
-.listIcon {
-  flex-shrink: 0;
-  color: var(--median);
-}
-
-.listBadge {
-  font-family: var(--font-display);
-  font-weight: 800;
-  font-size: 10px;
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border: var(--bw-thin) solid var(--ink);
-  border-radius: var(--r-pill);
-}
-.badgeNew { background: var(--mode); }
-.badgeUpdated { background: var(--sun); }
-
-.listNote {
-  font-family: var(--font-hand);
-  font-size: 16px;
-  color: var(--ash);
-}
-
-.listActions {
-  display: flex;
-  gap: var(--s-2);
-}
-.listActions .mmm-btn {
-  padding: 6px 14px;
-  font-size: 13px;
-  box-shadow: none;
 }
 
 .tab {
@@ -204,7 +92,9 @@
   transition: transform var(--dur-micro) var(--ease-bounce),
     background var(--dur-micro) var(--ease-out);
 }
+
 .tab:hover { transform: translateY(-2px); }
+
 .tab.active {
   background: var(--median);
   color: var(--paper);
@@ -222,21 +112,31 @@
 }
 
 @media (max-width: 640px) {
-  .list {
-    min-width: 640px;
+  .tab {
+    padding: 12px 18px;
   }
-  .listActions {
-    flex-direction: column;
-    gap: var(--s-1);
+  .pill,
+  .sort {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  .search {
+    padding: 12px 14px;
+    font-size: 16px; /* 16px stops iOS Safari zooming on focus */
+  }
+  .filters {
+    gap: var(--s-2);
   }
   .search {
     flex: 1 1 100%;
     min-width: 0;
   }
+
   .zipSlot {
     margin-left: 0;
     flex: 1 1 100%;
   }
+
 }
 
 /* ---------- motion ---------- */
@@ -245,13 +145,25 @@
   position: relative;
   overflow: hidden;
 }
-.tab:hover {
-  transform: translateY(-3px) rotate(-1deg);
-  box-shadow: var(--sh-1);
+
+@media (hover: hover) {
+  .tab:hover {
+    transform: translateY(-3px) rotate(-1deg);
+    box-shadow: var(--sh-1);
+  }
+  .pill:hover {
+    transform: translateY(-2px);
+    background: var(--mode-50);
+  }
+  .sort:hover {
+    background: var(--median-50);
+  }
 }
+
 .tab:active {
   transform: translateY(0) scale(0.97);
 }
+
 .tab.active {
   animation: pop var(--dur-std) var(--ease-bounce);
 }
@@ -260,16 +172,11 @@
   transition: transform var(--dur-micro) var(--ease-bounce),
     background var(--dur-micro) var(--ease-out);
 }
-.pill:hover {
-  transform: translateY(-2px);
-  background: var(--mode-50);
-}
+
+
+
 .pillActive {
   animation: pop var(--dur-std) var(--ease-bounce);
-}
-
-.viewBtn:hover {
-  background: var(--median-50);
 }
 
 .search:focus {
@@ -279,27 +186,24 @@
   transform: translateY(-1px);
 }
 
-/* Table rows stagger in and slide on hover */
-.list tbody tr {
-  animation: slide-in-left var(--dur-std) var(--ease-out) backwards;
-  transition: background var(--dur-micro) var(--ease-out);
-}
-.list tbody tr:nth-child(1)  { animation-delay: 20ms; }
-.list tbody tr:nth-child(2)  { animation-delay: 50ms; }
-.list tbody tr:nth-child(3)  { animation-delay: 80ms; }
-.list tbody tr:nth-child(4)  { animation-delay: 110ms; }
-.list tbody tr:nth-child(5)  { animation-delay: 140ms; }
-.list tbody tr:nth-child(n + 6) { animation-delay: 170ms; }
-.list tbody tr:hover {
-  background: var(--mode-50);
-}
-.list tbody tr:hover .listIcon {
-  transform: scale(1.2) rotate(-8deg);
-}
-.listIcon {
-  transition: transform var(--dur-std) var(--ease-bounce);
-}
-
 .empty {
   animation: pop-in var(--dur-std) var(--ease-bounce);
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }

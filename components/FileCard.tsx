@@ -1,7 +1,7 @@
 import type { CSSProperties } from "react";
 import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate, relativeDate } from "@/lib/utils";
-import { fileIconFor } from "@/lib/fileIcon";
+import FileIcon from "./FileIcon";
 import DownloadModal from "./DownloadModal";
 import StarButton from "./StarButton";
 import styles from "./FileCard.module.css";
@@ -15,7 +15,6 @@ export default function FileCard({
   index?: number;
   banner?: "new" | "updated";
 }) {
-  const Icon = fileIconFor(file.name);
   const size = formatBytes(file.size);
 
   return (
@@ -26,7 +25,7 @@ export default function FileCard({
         </span>
       )}
       <div className={styles.nameRow}>
-        <Icon size={20} weight="bold" className={styles.fileIcon} aria-hidden="true" />
+        <FileIcon name={file.name} size={20} weight="bold" className={styles.fileIcon} aria-hidden="true" />
         <p className={styles.name}>{file.name}</p>
         <StarButton path={file.path} label={file.name} />
       </div>

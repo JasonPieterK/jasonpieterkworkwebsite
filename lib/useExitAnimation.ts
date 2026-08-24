@@ -11,41 +11,43 @@ import { useEffect, useRef, useState } from "react";
  *
  * ponytail: a timer and two booleans. No animation library, and no
  * `onAnimationEnd` plumbing that breaks when a child animation fires first.
+ *
+ * The open->closing transition is computed during render (React's "adjusting
+ * state when a prop changes" pattern) so no effect ever calls setState
+ * synchronously; the effect below only schedules the unmount.
  */
 export function useExitAnimation(open: boolean, durationMs = 220) {
-  const [mounted, setMounted] = useState(open);
-  const [closing, setClosing] = useState(false);
+  const [state, setState] = useState<{ mounted: boolean; closing: boolean }>({
+    mounted: open,
+    closing: false,
+  });
+  const [prevOpen, setPrevOpen] = useState(open);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (timer.current) clearTimeout(timer.current);
-
+  if (open !== prevOpen) {
+    setPrevOpen(open);
     if (open) {
-      setMounted(true);
-      setClosing(false);
-      return;
+      setState({ mounted: true, closing: false });
+    } else if (state.mounted) {
+      setState({ mounted: true, closing: true });
     }
+  }
 
-    if (!mounted) return;
+  useEffect(() => {
+    if (!state.closing) return;
 
-    // Reduced motion: skip the exit entirely rather than freezing on screen.
+    // Reduced motion: unmount on the next tick rather than holding a frozen
+    // panel on screen for the animation's duration.
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      setMounted(false);
-      setClosing(false);
-      return;
-    }
-
-    setClosing(true);
-    timer.current = setTimeout(() => {
-      setMounted(false);
-      setClosing(false);
-    }, durationMs);
+    timer.current = setTimeout(
+      () => setState({ mounted: false, closing: false }),
+      reduced ? 0 : durationMs
+    );
 
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [open, mounted, durationMs]);
+  }, [state.closing, durationMs]);
 
-  return { mounted, closing };
+  return { mounted: state.mounted, closing: state.closing };
 }

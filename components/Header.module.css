@@ -5,8 +5,9 @@
   height: var(--nav-h);
   display: flex;
   align-items: center;
-  background: rgba(253, 252, 247, 0.7);
-  backdrop-filter: blur(16px);
+  background: rgba(253, 252, 247, 0.82);
+  backdrop-filter: blur(10px);
+  will-change: transform;
   border-bottom: var(--bw) solid var(--ink);
   animation: drop-in var(--dur-big) var(--ease-bounce);
 }
@@ -55,6 +56,14 @@
   max-width: 420px;
 }
 
+/* backdrop-filter on a sticky bar is the classic mobile scroll-jank source. */
+@media (max-width: 640px) {
+  .header {
+    background: var(--paper);
+    backdrop-filter: none;
+  }
+}
+
 @media (max-width: 560px) {
   .inner {
     gap: var(--s-2);
@@ -73,16 +82,19 @@
 .mark {
   transition: transform var(--dur-big) var(--ease-bounce);
 }
-.brand:hover .mark {
-  transform: rotate(360deg) scale(1.12);
+@media (hover: hover) {
+  .brand:hover .mark {
+    transform: rotate(360deg) scale(1.12);
+  }
+  .brand:hover .brandText {
+    color: var(--median);
+  }
 }
 
 .brandText {
   transition: color var(--dur-micro) var(--ease-out);
 }
-.brand:hover .brandText {
-  color: var(--median);
-}
+
 
 .searchWrap :global(.mmm-input) {
   transition: box-shadow var(--dur-micro) var(--ease-bounce),
@@ -92,4 +104,70 @@
 .searchWrap :global(.mmm-input):focus {
   transform: translateY(-1px);
   border-color: var(--median);
+}
+
+/* ---------- changelog nav button ---------- */
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 38px;
+  padding: 0 14px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.navBtn:hover {
+  text-decoration: none;
+}
+
+.navBtnText {
+  display: inline;
+}
+
+@media (hover: hover) {
+  .navBtn:hover {
+    background: var(--mode);
+    transform: translateY(-2px);
+    box-shadow: var(--sh-1);
+  }
+}
+.navBtn:active {
+  transform: translateY(0) scale(0.96);
+}
+
+@media (max-width: 720px) {
+  .navBtnText {
+    display: none;
+  }
+  .navBtn {
+    width: 38px;
+    padding: 0;
+    justify-content: center;
+  }
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -173,22 +173,70 @@
   gap: 4px;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .overlay {
-    padding-top: 6vh;
+    padding: 4vh var(--s-3) var(--s-3);
   }
   .rowMeta {
     display: none;
+  }
+  .row {
+    padding: 14px var(--s-3);
+  }
+  .results {
+    max-height: 60vh;
+  }
+  .footer {
+    display: none; /* keyboard hints are meaningless on a phone */
   }
 }
 
 /* ---------- closing animations ---------- */
 
 .overlayClosing {
-  animation: fade-out var(--dur-micro) var(--ease-in) forwards;
+  animation: fade-out 240ms var(--ease-out) forwards;
   pointer-events: none;
 }
 
 .panelClosing {
-  animation: pop-out 200ms var(--ease-in) forwards;
+  animation: pop-out 260ms var(--ease-in) forwards;
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+@keyframes pop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.14); }
+  100% { transform: scale(1); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes pop-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  40%  { opacity: 0.9; transform: translateY(-4px) scale(1.015); }
+  to   { opacity: 0; transform: translateY(18px) scale(0.9); }
+}
+
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-20px); }
+  to   { opacity: 1; transform: translateX(0); }
 }

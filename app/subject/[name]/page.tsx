@@ -1,10 +1,20 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getSubject } from "@/lib/github";
+import { getSubject, getSubjects } from "@/lib/github";
 import { githubTreeUrl } from "@/lib/repoLinks";
 import SemesterTabs from "@/components/SemesterTabs";
 import ZipButton from "@/components/ZipButton";
 import styles from "./page.module.css";
+
+/**
+ * Prerender every subject at build time and refresh on the shared revalidate
+ * window. Rendering on demand cost ~1.5s TTFB because each request re-walked
+ * the GitHub tree and commit list.
+ */
+export async function generateStaticParams() {
+  const subjects = await getSubjects();
+  return subjects.map((s) => ({ name: s.slug }));
+}
 
 export default async function SubjectPage(props: PageProps<"/subject/[name]">) {
   const { name } = await props.params;
@@ -40,12 +50,13 @@ export default async function SubjectPage(props: PageProps<"/subject/[name]">) {
           </a>
         </div>
       </div>
-      <SemesterTabs
-        subjectSlug={subject.slug}
-        semesters={subject.semesters}
-        newestAddedPath={subject.newestAdded?.path}
-        newestUpdatedPath={subject.newestUpdated?.path}
-      />
+      {subject.metaIncomplete && (
+        <p className={styles.metaNotice}>
+          GitHub didn&rsquo;t return change history just now, so dates and New/Updated badges are
+          missing. The files below are current — try the refresh button in a minute.
+        </p>
+      )}
+      <SemesterTabs subjectSlug={subject.slug} semesters={subject.semesters} />
     </main>
   );
 }

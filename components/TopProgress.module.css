@@ -17,3 +17,15 @@
   box-shadow: 0 0 12px rgba(45, 127, 249, 0.7);
   transition: width var(--dur-std) var(--ease-out);
 }
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}

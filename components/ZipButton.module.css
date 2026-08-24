@@ -60,6 +60,15 @@
   white-space: nowrap;
 }
 
+.warning {
+  display: inline-flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin: 0;
+  font-size: var(--fs-small);
+  color: #b45309;
+}
+
 .error {
   display: inline-flex;
   align-items: center;
@@ -68,4 +77,38 @@
   font-size: var(--fs-small);
   color: var(--coral);
   animation: wiggle var(--dur-std) var(--ease-out);
+}
+
+/*
+  Turbopack scopes every animation-name in a CSS module, so a keyframe that
+  lives only in globals.css never resolves here and the animation silently
+  does nothing. Local copies of the shared keyframes this file uses.
+  Generated — re-run scripts/sync-keyframes to refresh.
+*/
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-4px); }
+}
+
+@keyframes indeterminate {
+  0%   { transform: translateX(-100%) scaleX(0.4); }
+  50%  { transform: translateX(20%)   scaleX(0.7); }
+  100% { transform: translateX(100%)  scaleX(0.4); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25%      { transform: rotate(-7deg); }
+  75%      { transform: rotate(7deg); }
 }
