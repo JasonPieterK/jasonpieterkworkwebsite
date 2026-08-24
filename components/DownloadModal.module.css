@@ -586,6 +586,70 @@
   color: var(--ink);
 }
 
+/* ---------- stacked warning blocks ---------- */
+
+.warnBlock {
+  border: var(--bw-thin) solid var(--border-soft);
+  border-left: 3px solid #b45309;
+  border-radius: var(--r-sm);
+  background: var(--sun-50);
+  padding: var(--s-3);
+}
+.warnBlock + .warnBlock {
+  margin-top: var(--s-2);
+}
+
+.warnTitle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 4px;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 13px;
+  color: var(--ink);
+}
+.warnTitle svg {
+  flex-shrink: 0;
+  color: #b45309;
+}
+
+.warnText {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+  max-width: none;
+}
+
+.warnList {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
+.secondaryChoice {
+  margin-top: var(--s-2);
+  padding: 8px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--ash);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.secondaryChoice:hover {
+  color: var(--ink);
+}
+.secondaryChoice:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that

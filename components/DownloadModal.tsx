@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   ArrowSquareOut,
   CaretDown,
+  ClockCounterClockwise,
   DeviceMobile,
   FilePdf,
   CheckCircle,
@@ -46,12 +47,12 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   const [loading, setLoading] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [selected, setSelected] = useState<Version | null>(null);
-  const [warnOpen, setWarnOpen] = useState(false);
+  const [confirming, setConfirming] = useState<"word" | "pdf" | null>(null);
   const [dl, setDl] = useState<DownloadState>(IDLE);
   const [pdf, setPdf] = useState<{ stage: RenderStage | null; error?: string }>({ stage: null });
   const [showPreview, setShowPreview] = useState(false);
   const shell = useExitAnimation(open, 280);
-  const warnShell = useExitAnimation(warnOpen, 280);
+  const warnShell = useExitAnimation(confirming !== null, 280);
   const dropdownShell = useExitAnimation(pickerOpen, 180);
   const previewShell = useExitAnimation(showPreview, 260);
   const pickerRef = useRef<HTMLDivElement>(null);
@@ -88,12 +89,12 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
       if (e.key !== "Escape") return;
       // The warning dialog sits on top; Escape should dismiss that first
       // rather than pulling the modal out from under it.
-      if (warnOpen) setWarnOpen(false);
+      if (confirming) setConfirming(null);
       else setOpen(false);
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [open, warnOpen]);
+  }, [open, confirming]);
 
   useEffect(() => {
     if (!pickerOpen) return;
@@ -194,6 +195,33 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   }
 
   const working = dl.status === "working";
+  const isOldVersion = Boolean(selected?.sha);
+  const isWordFile = canRenderDocx(file.name);
+
+  /**
+   * Warnings that apply to an action. Both can be true at once — an older
+   * version opened on an iPhone earns each of them, stacked.
+   */
+  function warningsFor(action: "word" | "pdf"): ("old" | "iphone" | "browserPdf")[] {
+    const list: ("old" | "iphone" | "browserPdf")[] = [];
+    if (isOldVersion) list.push("old");
+    if (action === "word" && isIphone && isWordFile) list.push("iphone");
+    // Only the current version has a LibreOffice-built PDF waiting for it.
+    if (action === "pdf" && isOldVersion && isWordFile) list.push("browserPdf");
+    return list;
+  }
+
+  /** Run an action, stopping at a confirmation first when anything applies. */
+  function requestAction(action: "word" | "pdf") {
+    if (warningsFor(action).length > 0) {
+      setConfirming(action);
+      return;
+    }
+    if (action === "word") startDownload();
+    else exportPdf();
+  }
+
+  const confirmWarnings = confirming ? warningsFor(confirming) : [];
   // iPhones open .docx in a read-only preview that mangles layout, or push the
   // student towards installing Word. The PDF just opens.
   const suggestPdf = isIphone && canRenderDocx(file.name) && !working && !pdf.stage;
@@ -372,7 +400,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                     <DeviceMobile size={15} weight="bold" aria-hidden="true" />
                     <span>
                       On iPhone, Word files often open as a preview that looks wrong.{" "}
-                      <button type="button" className={styles.hintAction} onClick={exportPdf}>
+                      <button type="button" className={styles.hintAction} onClick={() => requestAction("pdf")}>
                         Save as PDF instead
                       </button>{" "}
                       — it opens properly and keeps the layout.
@@ -396,7 +424,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                     type="button"
                     className={`mmm-btn ${styles.actionBtn} ${styles.downloadBtn}`}
                     disabled={working}
-                    onClick={() => (selected?.sha ? setWarnOpen(true) : startDownload())}
+                    onClick={() => requestAction("word")}
                   >
                     <DownloadSimple size={18} weight="bold" className={working ? styles.bouncing : undefined} />
                     {working ? "Downloading…" : dl.status === "done" ? "Downloaded" : "Download"}
@@ -407,7 +435,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                   <button
                     type="button"
                     className={`mmm-btn mmm-btn--ghost ${styles.pdfBtn}`}
-                    onClick={exportPdf}
+                    onClick={() => requestAction("pdf")}
                     disabled={Boolean(pdf.stage)}
                     title="Convert this Word file to PDF in your browser and open the print dialog"
                   >
@@ -433,68 +461,135 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
           <div
             className={`${styles.overlay} ${warnShell.closing ? styles.overlayClosing : ""}`}
             style={{ zIndex: 400 }}
-            onMouseDown={(e) => e.target === e.currentTarget && setWarnOpen(false)}
+            onMouseDown={(e) => e.target === e.currentTarget && setConfirming(null)}
           >
             <div
               className={`${styles.modal} ${warnShell.closing ? styles.modalClosing : ""}`}
-              style={{ maxWidth: 420 }}
+              style={{ maxWidth: 460 }}
               role="alertdialog"
               aria-modal="true"
-              aria-label="Not the latest version"
+              aria-label="Before you download"
             >
               <div className={styles.header}>
                 <div className={styles.headerTitle}>
                   <span className={styles.iconBadge} style={{ color: "#b45309", background: "#fef3c7" }}>
                     <WarningCircle size={22} weight="bold" aria-hidden="true" />
                   </span>
-                  <h3 className={styles.name}>Not the latest version</h3>
+                  <h3 className={styles.name}>
+                    {confirmWarnings.length > 1 ? "Two things to check" : "Before you download"}
+                  </h3>
                 </div>
                 <button
                   type="button"
                   className={styles.closeBtn}
                   aria-label="Close"
-                  onClick={() => setWarnOpen(false)}
+                  onClick={() => setConfirming(null)}
                 >
                   <X size={18} weight="bold" />
                 </button>
               </div>
+
               <div className={styles.body}>
-                <p style={{ margin: 0, fontSize: 14, lineHeight: 1.6, color: "var(--ink)" }}>
-                  You&rsquo;re about to download an <strong>older version</strong> of{" "}
-                  <strong>{file.name}</strong> from {selected ? formatDate(selected.date) : ""}.
-                </p>
-                <ul style={{ margin: "8px 0 0", paddingLeft: 20, fontSize: 14, lineHeight: 1.6, color: "var(--ink)" }}>
-                  <li>Some questions may be <strong>wrong or outdated</strong>.</li>
-                  <li>Some questions may be <strong>unanswered</strong>.</li>
-                  <li>Some answers may be <strong>unchecked or unverified</strong>.</li>
-                  <li>This file does not reflect the latest corrections or updates.</li>
-                </ul>
-                <p style={{ margin: "12px 0 0", fontSize: 13, color: "var(--ash)" }}>
-                  Proceed only if you specifically need this older version. Otherwise, cancel and download the
-                  latest version instead.
-                </p>
+                {confirmWarnings.includes("old") && (
+                  <section className={styles.warnBlock}>
+                    <h4 className={styles.warnTitle}>
+                      <ClockCounterClockwise size={16} weight="bold" aria-hidden="true" />
+                      This is not the latest version
+                    </h4>
+                    <p className={styles.warnText}>
+                      You picked the version from {selected ? formatDate(selected.date) : ""}, not the
+                      current one.
+                    </p>
+                    <ul className={styles.warnList}>
+                      <li>Some questions may be <strong>wrong or outdated</strong>.</li>
+                      <li>Some questions may be <strong>unanswered</strong>.</li>
+                      <li>Some answers may be <strong>unchecked or unverified</strong>.</li>
+                    </ul>
+                  </section>
+                )}
+
+                {confirmWarnings.includes("iphone") && (
+                  <section className={styles.warnBlock}>
+                    <h4 className={styles.warnTitle}>
+                      <DeviceMobile size={16} weight="bold" aria-hidden="true" />
+                      Word files open badly on iPhone
+                    </h4>
+                    <p className={styles.warnText}>
+                      iPhone shows <strong>.docx</strong> in a preview that often breaks the layout, or asks
+                      you to install Word. A PDF opens straight away and looks right.
+                    </p>
+                  </section>
+                )}
+
+                {confirmWarnings.includes("browserPdf") && (
+                  <section className={styles.warnBlock}>
+                    <h4 className={styles.warnTitle}>
+                      <FilePdf size={16} weight="bold" aria-hidden="true" />
+                      This PDF is built in your browser
+                    </h4>
+                    <p className={styles.warnText}>
+                      Only the current version has a ready-made PDF. For an older one your browser lays the
+                      document out and opens the print dialog — choose <strong>Save as PDF</strong> there.
+                      It is very close to Word, but not identical.
+                    </p>
+                  </section>
+                )}
+
                 <div className={styles.actionRow}>
                   <button
                     type="button"
                     className={`mmm-btn mmm-btn--ghost ${styles.actionBtn}`}
-                    onClick={() => setWarnOpen(false)}
+                    onClick={() => setConfirming(null)}
                   >
                     Cancel
                   </button>
+
+                  {confirmWarnings.includes("iphone") ? (
+                    <button
+                      type="button"
+                      className={`mmm-btn ${styles.actionBtn} ${styles.downloadBtn}`}
+                      disabled={Boolean(pdf.stage)}
+                      onClick={() => {
+                        setConfirming(null);
+                        exportPdf();
+                      }}
+                    >
+                      <FilePdf size={18} weight="bold" />
+                      Get the PDF
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      className={`mmm-btn ${styles.actionBtn}`}
+                      style={{ background: "#b45309", color: "#fff" }}
+                      disabled={working || Boolean(pdf.stage)}
+                      onClick={() => {
+                        const action = confirming;
+                        setConfirming(null);
+                        if (action === "word") startDownload();
+                        else exportPdf();
+                      }}
+                    >
+                      <DownloadSimple size={18} weight="bold" />
+                      Continue anyway
+                    </button>
+                  )}
+                </div>
+
+                {/* On iPhone the safe option is promoted above, so keep Word reachable but quiet. */}
+                {confirmWarnings.includes("iphone") && (
                   <button
                     type="button"
-                    className={`mmm-btn ${styles.actionBtn}`}
-                    style={{ background: "#b45309", color: "#fff" }}
+                    className={styles.secondaryChoice}
                     disabled={working}
                     onClick={() => {
-                      setWarnOpen(false);
+                      setConfirming(null);
                       startDownload();
                     }}
                   >
-                    <DownloadSimple size={18} weight="bold" />
-                    Proceed anyway
+                    Download the Word file anyway
                   </button>
-                </div>
+                )}
               </div>
             </div>
           </div>,
