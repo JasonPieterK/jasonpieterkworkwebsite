@@ -137,13 +137,16 @@
   transform: rotate(180deg);
 }
 
+/*
+  In flow, not absolutely positioned: the modal body scrolls (it has to, so a
+  tall modal never pushes its buttons off screen), and a scroll container clips
+  absolutely positioned children — which cut the version list off at the panel
+  edge, worst on short screens.
+*/
 .dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  left: 0;
-  right: 0;
-  z-index: 10;
-  max-height: 220px;
+  position: static;
+  margin-top: 6px;
+  max-height: min(240px, 38dvh);
   overflow-y: auto;
   background: var(--paper);
   border: var(--bw) solid var(--ink);

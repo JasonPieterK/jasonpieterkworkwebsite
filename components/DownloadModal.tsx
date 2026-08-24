@@ -52,6 +52,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   const dropdownShell = useExitAnimation(pickerOpen, 180);
   const previewShell = useExitAnimation(showPreview, 260);
   const pickerRef = useRef<HTMLDivElement>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   const latest: Version = useMemo(
@@ -98,6 +99,16 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     }
     document.addEventListener("mousedown", onClickOutside);
     return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [pickerOpen]);
+
+  // Opening the list near the bottom of a scrolled body would otherwise leave
+  // it below the fold with no hint that it is there.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const id = requestAnimationFrame(() =>
+      dropdownRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" })
+    );
+    return () => cancelAnimationFrame(id);
   }, [pickerOpen]);
 
   // Abort an in-flight download if the card unmounts.
@@ -283,6 +294,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                   </button>
                   {dropdownShell.mounted && (
                     <div
+                      ref={dropdownRef}
                       className={`${styles.dropdown} ${dropdownShell.closing ? styles.dropdownClosing : ""}`}
                     >
                       <button
