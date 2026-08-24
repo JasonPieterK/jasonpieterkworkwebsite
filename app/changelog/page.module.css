@@ -240,7 +240,12 @@
 
 @media (max-width: 640px) {
   .head {
-    padding-top: var(--s-6);
+    padding: var(--s-3) 0 var(--s-4);
+    gap: var(--s-3);
+  }
+  .timeline {
+    gap: var(--s-5);
+    padding-bottom: var(--s-7);
   }
   .ghBtn {
     width: 100%;

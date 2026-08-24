@@ -213,6 +213,12 @@ html {
   broken on a small screen where everything is in view at once.
 */
 @media (max-width: 640px) {
+  /* The vertical rhythm is tuned for a desktop viewport; at 414px the same
+     tokens read as dead space before anything useful appears. */
+  .container {
+    padding: var(--s-4) var(--s-4) var(--s-7);
+  }
+
   main.container > *:nth-child(n) {
     animation-delay: 30ms;
   }

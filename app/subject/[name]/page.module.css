@@ -60,6 +60,23 @@
   text-decoration: none;
 }
 
+@media (max-width: 640px) {
+  .back {
+    margin-top: 0;
+  }
+  .head {
+    padding: var(--s-4) 0 var(--s-3);
+    gap: var(--s-3);
+  }
+  .headActions {
+    gap: var(--s-3);
+    width: 100%;
+  }
+  .metaNotice {
+    margin-bottom: var(--s-3);
+  }
+}
+
 /* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that

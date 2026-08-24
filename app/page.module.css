@@ -11,3 +11,11 @@
   padding-top: var(--s-7);
   padding-bottom: var(--s-9);
 }
+
+@media (max-width: 640px) {
+  .grid {
+    gap: var(--s-4);
+    padding-top: var(--s-3);
+    padding-bottom: var(--s-7);
+  }
+}

@@ -76,6 +76,16 @@
   text-overflow: ellipsis;
 }
 
+@media (max-width: 640px) {
+  .rails {
+    gap: var(--s-4);
+    padding-top: var(--s-3);
+  }
+  .railGrid {
+    gap: var(--s-3);
+  }
+}
+
 /* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that
