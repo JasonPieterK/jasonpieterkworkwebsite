@@ -5,11 +5,18 @@ import { useHash } from "@/lib/useHash";
 import type { SemesterGroup } from "@/lib/types";
 import { SORTS, sortFiles, type SortKey } from "@/lib/sort";
 import FileCard from "./FileCard";
+import ZipButton from "./ZipButton";
 import styles from "./SemesterTabs.module.css";
 
 type StatusFilter = "all" | "new" | "updated";
 
-export default function SemesterTabs({ semesters }: { semesters: SemesterGroup[] }) {
+export default function SemesterTabs({
+  subjectSlug,
+  semesters,
+}: {
+  subjectSlug: string;
+  semesters: SemesterGroup[];
+}) {
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("newest");
@@ -113,6 +120,17 @@ export default function SemesterTabs({ semesters }: { semesters: SemesterGroup[]
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
+        <div className={styles.zipSlot}>
+          {/* Scoped to the selected semester — there is deliberately no
+              whole-subject download. */}
+          <ZipButton
+            subjectSlug={subjectSlug}
+            semester={current.semester}
+            label={`${subjectSlug} ${current.semester}`}
+            fileCount={current.files.length}
+            totalBytes={current.files.reduce((n, f) => n + f.size, 0)}
+          />
+        </div>
       </div>
 
       {files.length === 0 ? (
