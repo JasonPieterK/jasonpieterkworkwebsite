@@ -258,7 +258,9 @@
   height: 100%;
   width: 0;
   border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--median), var(--mode));
+  /* A single lime fill with a lighter sweep — the shimmer still reads as
+     movement without turning the bar into a gradient of unrelated hues. */
+  background: linear-gradient(90deg, var(--mode) 0%, #d6f16b 50%, var(--mode) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
   transition: width var(--dur-std) var(--ease-out);

@@ -1,9 +1,15 @@
 import type { ChangelogEntry, ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 
-// Fallback TTL — the GitHub webhook (app/api/revalidate) triggers instant
-// revalidation on push, this just bounds staleness if that ever misfires.
+// Fallback TTL — a push notifies app/api/revalidate, which drops the tag below
+// immediately; this only bounds staleness if that notification never arrives.
 const REVALIDATE_SECONDS = 600;
+/**
+ * Every GitHub response carries this tag. Invalidating the page alone was not
+ * enough: the page would regenerate and rebuild itself from a still-cached API
+ * response, so new commits took up to REVALIDATE_SECONDS to appear anyway.
+ */
+export const GITHUB_CACHE_TAG = "github";
 const HIDDEN_FILES = new Set([".gitkeep"]);
 // New/Updated badges expire once their commit is more than this many commits behind HEAD (repo-wide).
 const BADGE_COMMIT_WINDOW = 3;
@@ -21,7 +27,7 @@ async function ghFetch<T>(url: string): Promise<T> {
       Accept: "application/vnd.github+json",
       ...authHeaders(),
     },
-    next: { revalidate: REVALIDATE_SECONDS },
+    next: { revalidate: REVALIDATE_SECONDS, tags: [GITHUB_CACHE_TAG] },
   });
   // Secondary/abuse limits answer 403 with a non-zero remaining, or 429.
   const throttled =

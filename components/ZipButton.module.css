@@ -39,7 +39,7 @@
   height: 100%;
   width: 0;
   border-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--mode), var(--median));
+  background: linear-gradient(90deg, var(--mode) 0%, #d6f16b 50%, var(--mode) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.6s linear infinite;
   transition: width var(--dur-std) var(--ease-out);

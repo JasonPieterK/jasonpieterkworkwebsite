@@ -5,7 +5,6 @@ import "./mmm-tokens.css";
 import "./globals.css";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import PullToRefresh from "@/components/PullToRefresh";
 import TopProgress from "@/components/TopProgress";
 
 const bagel = Bagel_Fat_One({ weight: "400", subsets: ["latin"], variable: "--font-hero-family" });
@@ -58,7 +57,6 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Suspense fallback={null}>
           <TopProgress />
         </Suspense>
-        <PullToRefresh />
         <Header />
         {children}
         <Footer />

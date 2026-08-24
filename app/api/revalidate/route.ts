@@ -1,6 +1,7 @@
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
+import { GITHUB_CACHE_TAG } from "@/lib/github";
 
 // ponytail: in-memory throttle resets on redeploy/cold-start — fine as a soft
 // guard against a spammed button, not a security boundary.
@@ -33,6 +34,10 @@ export async function POST(req: NextRequest) {
     lastManualRevalidate = now;
   }
 
+  // Both layers, or the page regenerates from a cached GitHub response.
+  // 'max' is the stale-while-revalidate profile Next recommends: the next
+  // request gets fresh data without anyone waiting on a cold render.
+  revalidateTag(GITHUB_CACHE_TAG, "max");
   revalidatePath("/", "layout");
   return NextResponse.json({ revalidated: true, now: Date.now() });
 }

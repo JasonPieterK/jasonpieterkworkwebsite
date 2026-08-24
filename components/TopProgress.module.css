@@ -13,8 +13,8 @@
 .bar {
   height: 100%;
   border-bottom-right-radius: var(--r-pill);
-  background: linear-gradient(90deg, var(--median), var(--mean), var(--mode));
-  box-shadow: 0 0 12px rgba(45, 127, 249, 0.7);
+  background: var(--mode);
+  box-shadow: 0 0 12px rgba(184, 226, 43, 0.75);
   transition: width var(--dur-std) var(--ease-out);
 }
 
