@@ -21,6 +21,19 @@
   animation-delay: 200ms;
 }
 
+.licenseLink {
+  color: var(--median);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+@media (hover: hover) {
+  .licenseLink:hover {
+    color: var(--ink);
+    text-decoration-thickness: 2px;
+  }
+}
+
 /* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that
