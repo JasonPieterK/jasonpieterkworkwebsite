@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import {
   ArrowSquareOut,
   CaretDown,
+  DeviceMobile,
   FilePdf,
   CheckCircle,
   DownloadSimple,
@@ -24,6 +25,7 @@ import { canRenderDocx, printDocxAsPdf, type RenderStage } from "@/lib/docxRende
 import DocxPreview from "./DocxPreview";
 import { useExitAnimation } from "@/lib/useExitAnimation";
 import { useIsClient } from "@/lib/useIsClient";
+import { useIsIphone } from "@/lib/useIsIphone";
 import styles from "./DownloadModal.module.css";
 
 type Version = { sha: string; date: string; message: string };
@@ -38,6 +40,7 @@ const IDLE: DownloadState = { status: "idle", pct: null, bytes: 0 };
 
 export default function DownloadModal({ file }: { file: FileEntry }) {
   const mounted = useIsClient();
+  const isIphone = useIsIphone();
   const [open, setOpen] = useState(false);
   const [versions, setVersions] = useState<Version[] | null>(null);
   const [loading, setLoading] = useState(false);
@@ -191,6 +194,9 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   }
 
   const working = dl.status === "working";
+  // iPhones open .docx in a read-only preview that mangles layout, or push the
+  // student towards installing Word. The PDF just opens.
+  const suggestPdf = isIphone && canRenderDocx(file.name) && !working && !pdf.stage;
   const pdfLabel =
     pdf.stage === "fetching"
       ? "Fetching…"
@@ -360,6 +366,19 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
                     </div>
                   )}
                 </div>
+
+                {suggestPdf && (
+                  <p className={styles.iphoneHint}>
+                    <DeviceMobile size={15} weight="bold" aria-hidden="true" />
+                    <span>
+                      On iPhone, Word files often open as a preview that looks wrong.{" "}
+                      <button type="button" className={styles.hintAction} onClick={exportPdf}>
+                        Save as PDF instead
+                      </button>{" "}
+                      — it opens properly and keeps the layout.
+                    </span>
+                  </p>
+                )}
 
                 <div className={styles.actionRow}>
                   {(preview || canRenderDocx(file.name)) && (

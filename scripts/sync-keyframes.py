@@ -14,12 +14,16 @@ import sys
 ROOT = sys.argv[1] if len(sys.argv) > 1 else "."
 GLOBALS = os.path.join(ROOT, "app", "globals.css")
 
+BEGIN = "/* BEGIN generated keyframes — scripts/sync-keyframes.py */"
+END = "/* END generated keyframes */"
+
 NOTE = (
+    BEGIN + "\n"
     "/*\n"
     "  Turbopack scopes every animation-name in a CSS module, so a keyframe that\n"
     "  lives only in globals.css never resolves here and the animation silently\n"
     "  does nothing. Local copies of the shared keyframes this file uses.\n"
-    "  Generated — re-run scripts/sync-keyframes to refresh.\n"
+    "  Edits inside this block are overwritten; put real rules above it.\n"
     "*/\n"
 )
 
@@ -67,16 +71,28 @@ targets = glob.glob(os.path.join(ROOT, "components", "*.module.css")) + glob.glo
 changed = 0
 for path in targets:
     css = open(path, encoding="utf-8").read()
-    i = css.find(NOTE[:60])
-    if i != -1:  # drop a previous generation before regenerating
-        css = css[:i].rstrip() + "\n"
+
+    # Replace only what sits between the markers. Truncating from the marker to
+    # end-of-file silently deleted any rule written after the generated block.
+    start, stop = css.find(BEGIN), css.find(END)
+    if start != -1 and stop != -1:
+        css = (css[:start].rstrip() + "\n\n" + css[stop + len(END) :].lstrip()).rstrip() + "\n"
+    elif start != -1:
+        css = css[:start].rstrip() + "\n"
+    else:
+        # Pre-marker generations ended the file; strip from the old header.
+        legacy = css.find("/*\n  Turbopack scopes every animation-name")
+        if legacy != -1:
+            css = css[:legacy].rstrip() + "\n"
     local = set(re.findall(r"@keyframes\s+([\w-]+)", css))
     missing = sorted((used_names(css) & frames.keys()) - local)
     if not missing:
         open(path, "w", encoding="utf-8").write(css)
         continue
     body = "\n\n".join(frames[n] for n in missing)
-    open(path, "w", encoding="utf-8").write(css.rstrip() + "\n\n" + NOTE + "\n" + body + "\n")
+    open(path, "w", encoding="utf-8").write(
+        css.rstrip() + "\n\n" + NOTE + "\n" + body + "\n\n" + END + "\n"
+    )
     changed += 1
     print(f"  {os.path.relpath(path, ROOT):46s} + {', '.join(missing)}")
 

@@ -60,11 +60,12 @@
   text-decoration: none;
 }
 
+/* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that
   lives only in globals.css never resolves here and the animation silently
   does nothing. Local copies of the shared keyframes this file uses.
-  Generated — re-run scripts/sync-keyframes to refresh.
+  Edits inside this block are overwritten; put real rules above it.
 */
 
 @keyframes rise-in {
@@ -77,3 +78,5 @@
     transform: translateY(0) scale(1);
   }
 }
+
+/* END generated keyframes */

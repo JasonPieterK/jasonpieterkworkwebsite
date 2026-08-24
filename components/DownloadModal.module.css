@@ -547,11 +547,51 @@
   }
 }
 
+/* ---------- iPhone hint ---------- */
+
+.iphoneHint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--s-2);
+  margin: var(--s-2) 0 0;
+  padding: 10px var(--s-3);
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-md);
+  background: var(--sun-50);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  animation: pop-in var(--dur-std) var(--ease-out);
+}
+
+.iphoneHint svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: #b45309;
+}
+
+.hintAction {
+  display: inline;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 700;
+  color: var(--median);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.hintAction:hover {
+  color: var(--ink);
+}
+
+/* BEGIN generated keyframes — scripts/sync-keyframes.py */
 /*
   Turbopack scopes every animation-name in a CSS module, so a keyframe that
   lives only in globals.css never resolves here and the animation silently
   does nothing. Local copies of the shared keyframes this file uses.
-  Generated — re-run scripts/sync-keyframes to refresh.
+  Edits inside this block are overwritten; put real rules above it.
 */
 
 @keyframes collapse-out {
@@ -612,3 +652,5 @@
   25%      { transform: rotate(-7deg); }
   75%      { transform: rotate(7deg); }
 }
+
+/* END generated keyframes */

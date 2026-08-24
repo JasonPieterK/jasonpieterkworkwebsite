@@ -33,14 +33,14 @@ const SITE_URL = "https://jasonpieterkwork.vercel.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "jasonpieterkwork — Grade 9.1 course materials",
+    default: "jasonpieterkwork",
     template: "%s · jasonpieterkwork",
   },
   description:
-    "Grade 9.1 class materials by subject and semester — notes, worksheets, and assignments, synced live from GitHub.",
+    "Class materials by subject and semester — notes, worksheets, and assignments, synced live from GitHub.",
   openGraph: {
-    title: "jasonpieterkwork — Grade 9.1 course materials",
-    description: "Grade 9.1 class materials by subject and semester, synced live from GitHub.",
+    title: "jasonpieterkwork",
+    description: "Class materials by subject and semester, synced live from GitHub.",
     url: SITE_URL,
     siteName: "jasonpieterkwork",
     type: "website",

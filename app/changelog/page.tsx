@@ -8,7 +8,7 @@ import styles from "./page.module.css";
 
 export const metadata: Metadata = {
   title: "Changelog",
-  description: "Every change to the Grade 9.1 course materials, newest first, straight from GitHub.",
+  description: "Every change to the course materials, newest first, straight from GitHub.",
 };
 
 const HISTORY_URL = `https://github.com/${OWNER}/${REPO}/commits/${BRANCH}`;
