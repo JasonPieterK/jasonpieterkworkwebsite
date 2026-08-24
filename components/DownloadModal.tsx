@@ -17,7 +17,7 @@ import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate } from "@/lib/utils";
 import FileIcon from "./FileIcon";
 import { getInlinePreview } from "@/lib/preview";
-import { rawUrlFor } from "@/lib/repoLinks";
+import { prebuiltPdfUrlFor, rawUrlFor } from "@/lib/repoLinks";
 import { downloadWithProgress } from "@/lib/download";
 import { confettiScreen } from "@/lib/confetti";
 import { canRenderDocx, printDocxAsPdf, type RenderStage } from "@/lib/docxRender";
@@ -157,9 +157,33 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     setPdf({ stage: "fetching" });
     window.dispatchEvent(new Event("progress:start"));
     try {
+      // A GitHub Action converts each document with LibreOffice — a real print
+      // engine — and publishes the result to the repo's `pdf` branch. Prefer
+      // that: it is a straight download and matches Word far more closely than
+      // anything a browser can lay out.
+      //
+      // Only the latest version is prebuilt, so an older version still goes
+      // through the in-browser path, as does anything not yet converted.
+      const prebuilt = selected?.sha ? null : prebuiltPdfUrlFor(file.path);
+      if (prebuilt) {
+        const head = await fetch(prebuilt, { method: "HEAD" }).catch(() => null);
+        if (head?.ok) {
+          await downloadWithProgress(
+            prebuilt,
+            file.name.replace(/\.docx?$/i, ".pdf"),
+            (pct, bytes) => setDl({ status: "working", pct, bytes })
+          );
+          setDl((d) => ({ status: "done", pct: 100, bytes: d.bytes }));
+          setPdf({ stage: null });
+          confettiScreen();
+          return;
+        }
+      }
+
       await printDocxAsPdf(selectedRawUrl, file.name, (stage) => setPdf({ stage }));
       setPdf({ stage: null });
     } catch (err) {
+      setDl(IDLE);
       setPdf({ stage: null, error: err instanceof Error ? err.message : "Could not build the PDF" });
     } finally {
       window.dispatchEvent(new Event("progress:done"));
