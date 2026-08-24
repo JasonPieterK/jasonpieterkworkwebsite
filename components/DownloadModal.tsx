@@ -50,7 +50,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   const shell = useExitAnimation(open, 280);
   const warnShell = useExitAnimation(warnOpen, 280);
   const dropdownShell = useExitAnimation(pickerOpen, 180);
-  const previewShell = useExitAnimation(showPreview, 240);
+  const previewShell = useExitAnimation(showPreview, 260);
   const pickerRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 

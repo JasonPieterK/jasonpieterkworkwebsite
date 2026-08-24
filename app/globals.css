@@ -80,9 +80,15 @@ body {
   to   { opacity: 0; transform: translateY(18px) scale(0.9); }
 }
 
+/*
+  Closing the document preview. Deliberately no scaleY: squashing a tall block
+  of text reads as a glitch, and it forces a repaint of everything inside on
+  every frame. Opacity plus a small lift is compositor-only and reads as the
+  panel stepping back.
+*/
 @keyframes collapse-out {
-  from { opacity: 1; transform: scaleY(1) translateY(0); }
-  to   { opacity: 0; transform: scaleY(0.82) translateY(-8px); }
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-10px) scale(0.985); }
 }
 
 @keyframes slide-in-left {

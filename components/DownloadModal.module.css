@@ -327,7 +327,12 @@
 /* ---------- file meta + in-page preview ---------- */
 
 .modal {
-  transition: max-width var(--dur-big) var(--ease-bounce);
+  /*
+    Matches the preview's exit timing exactly. With a bouncy 480ms width
+    transition the panel overshot and wobbled while the preview was still
+    fading, which is what made closing look broken.
+  */
+  transition: max-width 260ms var(--ease-out);
   will-change: transform, opacity;
 }
 .modal.modalWide {
@@ -383,7 +388,8 @@
   background: var(--bone);
   overflow: hidden;
   margin-bottom: var(--s-3);
-  animation: pop-in var(--dur-std) var(--ease-bounce);
+  animation: pop-in 240ms var(--ease-out);
+  transform-origin: top center;
 }
 
 .previewFrame {
@@ -448,9 +454,11 @@
 }
 
 .previewClosing {
-  animation: collapse-out 240ms var(--ease-in) forwards;
+  animation: collapse-out 240ms var(--ease-out) forwards;
   transform-origin: top center;
   pointer-events: none;
+  /* Hold the height while it fades so the panel does not jump mid-animation. */
+  overflow: hidden;
 }
 
 /* ---------- mobile ---------- */
@@ -544,8 +552,8 @@
 */
 
 @keyframes collapse-out {
-  from { opacity: 1; transform: scaleY(1) translateY(0); }
-  to   { opacity: 0; transform: scaleY(0.82) translateY(-8px); }
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 0; transform: translateY(-10px) scale(0.985); }
 }
 
 @keyframes fade-in {

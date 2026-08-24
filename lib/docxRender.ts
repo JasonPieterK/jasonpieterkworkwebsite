@@ -44,6 +44,10 @@ function stripUnsafeLinks(root: ParentNode): void {
   }
 }
 
+function escapeHtml(text: string): string {
+  return text.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]!);
+}
+
 async function fetchDocx(url: string, signal?: AbortSignal): Promise<Blob> {
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`Could not fetch the document (${res.status})`);
@@ -72,6 +76,16 @@ export async function renderDocxInto(
  * Render into a new window and open the print dialog, where "Save as PDF"
  * produces a document laid out like Word's own print output.
  */
+/**
+ * Render into a hidden iframe and open the print dialog, where "Save as PDF"
+ * produces a document laid out like Word's own print output.
+ *
+ * An iframe rather than a popup on purpose: the document has to be fetched and
+ * the renderer dynamically imported first, and by the time those awaits
+ * resolve the user-activation token from the click is gone, so window.open is
+ * blocked. Printing a same-document iframe needs no gesture and no popup
+ * permission.
+ */
 export async function printDocxAsPdf(
   url: string,
   fileName: string,
@@ -84,18 +98,31 @@ export async function printDocxAsPdf(
   onStage?.("rendering");
   const { renderAsync } = await import("docx-preview");
 
-  const win = window.open("", "_blank");
-  if (!win) {
-    throw new Error("Your browser blocked the popup — allow popups for this site and try again.");
+  const frame = document.createElement("iframe");
+  // Off-screen rather than display:none — a hidden iframe has no layout, and
+  // docx-preview needs real dimensions to lay the pages out.
+  frame.setAttribute("aria-hidden", "true");
+  frame.style.cssText =
+    "position:fixed;left:-10000px;top:0;width:820px;height:1200px;border:0;visibility:hidden";
+  document.body.appendChild(frame);
+
+  const doc = frame.contentDocument;
+  const win = frame.contentWindow;
+  if (!doc || !win) {
+    frame.remove();
+    throw new Error("Could not prepare the document for printing.");
   }
 
-  win.document.write(
-    `<!doctype html><html><head><meta charset="utf-8"><title>${fileName.replace(/\.[^.]+$/, "")}</title></head><body></body></html>`
+  doc.open();
+  doc.write(
+    `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(
+      fileName.replace(/\.[^.]+$/, "")
+    )}</title></head><body></body></html>`
   );
-  win.document.close();
+  doc.close();
 
-  await renderAsync(blob, win.document.body, win.document.head, RENDER_OPTIONS);
-  stripUnsafeLinks(win.document.body);
+  await renderAsync(blob, doc.body, doc.head, RENDER_OPTIONS);
+  stripUnsafeLinks(doc.body);
 
   // Appended *after* rendering: renderAsync empties the style container it is
   // given, so anything injected beforehand is discarded.
@@ -104,7 +131,7 @@ export async function printDocxAsPdf(
   // section, so the print box must add nothing of its own — no @page margin
   // (that would inset an already-correct page), and none of the on-screen
   // wrapper chrome (grey backdrop, gutters, page shadows).
-  const printCss = win.document.createElement("style");
+  const printCss = doc.createElement("style");
   printCss.textContent = `
     html, body { margin: 0; padding: 0; background: #fff; }
     .docx-wrapper {
@@ -124,11 +151,25 @@ export async function printDocxAsPdf(
       .docx-wrapper > section.docx:last-child { break-after: auto; }
     }
   `;
-  win.document.head.appendChild(printCss);
+  doc.head.appendChild(printCss);
 
   onStage?.("opening");
   // Give inline images a moment to decode before the print preview snapshots.
   await new Promise((resolve) => setTimeout(resolve, 400));
+
+  // The browser names the saved file after the document title, so set the
+  // parent title too — some browsers read that one instead.
+  const previousTitle = document.title;
+  document.title = fileName.replace(/\.[^.]+$/, "");
+
+  const cleanup = () => {
+    document.title = previousTitle;
+    frame.remove();
+  };
+  win.addEventListener("afterprint", cleanup, { once: true });
+  // Fallback for browsers that never fire afterprint (older Safari).
+  setTimeout(cleanup, 60_000);
+
   win.focus();
   win.print();
 }
