@@ -27,6 +27,8 @@ import DocxPreview from "./DocxPreview";
 import { useExitAnimation } from "@/lib/useExitAnimation";
 import { useIsClient } from "@/lib/useIsClient";
 import { useIsIphone } from "@/lib/useIsIphone";
+import { checkIfFileLocked, verifyFilePassword } from "@/lib/fileLock";
+import FileLockPrompt from "./FileLockPrompt";
 import styles from "./DownloadModal.module.css";
 
 type Version = { sha: string; date: string; message: string };
@@ -51,6 +53,9 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   const [dl, setDl] = useState<DownloadState>(IDLE);
   const [pdf, setPdf] = useState<{ stage: RenderStage | null; error?: string }>({ stage: null });
   const [showPreview, setShowPreview] = useState(false);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockCheckLoading, setLockCheckLoading] = useState(false);
+  const [isUnlocked, setIsUnlocked] = useState(false);
   const shell = useExitAnimation(open, 280);
   const warnShell = useExitAnimation(confirming !== null, 280);
   const dropdownShell = useExitAnimation(pickerOpen, 180);
@@ -70,10 +75,17 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     setDl(IDLE);
     setShowPreview(false);
     setOpen(true);
+    setIsUnlocked(false);
+
+    // Check if file is locked
+    setLockCheckLoading(true);
+    checkIfFileLocked(file.path)
+      .then((locked) => setIsLocked(locked))
+      .finally(() => setLockCheckLoading(false));
 
     // Version history is fetched once, on first open — a click is the trigger,
     // so it belongs here rather than in an effect watching `open`.
-    if (versions === null && !loading) {
+    if (versions === null && !loading && isUnlocked) {
       setLoading(true);
       fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
         .then((r) => r.json())
@@ -82,6 +94,18 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
         .finally(() => setLoading(false));
     }
   }
+
+  useEffect(() => {
+    if (!open || isLocked || !isUnlocked) return;
+    if (versions === null && !loading) {
+      setLoading(true);
+      fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
+        .then((r) => r.json())
+        .then((data) => setVersions(Array.isArray(data) ? data : []))
+        .catch(() => setVersions([]))
+        .finally(() => setLoading(false));
+    }
+  }, [open, isUnlocked, isLocked, versions, loading, file.path]);
 
   useEffect(() => {
     if (!open) return;
@@ -194,6 +218,15 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     }
   }
 
+  async function handleUnlock(password: string): Promise<boolean> {
+    const success = await verifyFilePassword(file.path, password);
+    if (success) {
+      setIsUnlocked(true);
+      setIsLocked(false);
+    }
+    return success;
+  }
+
   const working = dl.status === "working";
   const isOldVersion = Boolean(selected?.sha);
   const isWordFile = canRenderDocx(file.name);
@@ -278,8 +311,17 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
       <button type="button" className="mmm-btn mmm-btn--ghost" onClick={openModal}>
         Open
       </button>
+      {open && isLocked && !isUnlocked && (
+        <FileLockPrompt
+          fileName={file.name}
+          filePath={file.path}
+          onUnlock={handleUnlock}
+          onCancel={() => setOpen(false)}
+        />
+      )}
       {shell.mounted &&
         mounted &&
+        (!isLocked || isUnlocked) &&
         createPortal(
           <div
             className={`${styles.overlay} ${shell.closing ? styles.overlayClosing : ""}`}
