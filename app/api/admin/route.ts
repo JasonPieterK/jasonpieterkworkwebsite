@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
-import { hashPassword, verifyPassword } from "@/lib/passwordHash";
+import { hashPassword } from "@/lib/passwordHash";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const DATA_FILE = path.join(process.cwd(), "data", "locked-files.json");
@@ -23,13 +23,12 @@ function checkAuth(req: NextRequest): boolean {
   const auth = req.headers.get("authorization");
   const token = auth?.replace("Bearer ", "");
   if (!token) return false;
-  // Simple auth: token must match hashed admin password
-  return verifyPassword(token, hashPassword(ADMIN_PASSWORD));
+  return token === ADMIN_PASSWORD;
 }
 
 export async function POST(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token || !verifyPassword(token, hashPassword(ADMIN_PASSWORD))) {
+  if (!token || token !== ADMIN_PASSWORD) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -73,7 +72,7 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token || !verifyPassword(token, hashPassword(ADMIN_PASSWORD))) {
+  if (!token || token !== ADMIN_PASSWORD) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
