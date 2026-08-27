@@ -1,4 +1,4 @@
-import { BRANCH, ROOT_PREFIX } from "./repoLinks";
+import { BRANCH, PDF_BRANCH, ROOT_PREFIX } from "./repoLinks";
 
 /**
  * Guards for anything that ends up inside a raw.githubusercontent.com URL.
@@ -22,6 +22,24 @@ export function isSafeRepoPath(path: string): boolean {
 /** A commit SHA, or the default branch. Nothing else may address content. */
 export function isSafeRef(ref: string): boolean {
   return ref === BRANCH || /^[0-9a-f]{7,40}$/i.test(ref);
+}
+
+/** Same, but also allows the branch holding prebuilt PDFs. */
+export function isSafeRawRef(ref: string): boolean {
+  return ref === PDF_BRANCH || isSafeRef(ref);
+}
+
+/**
+ * A path on the `pdf` branch, which mirrors the materials tree with
+ * ROOT_PREFIX stripped, so it cannot be checked against isSafeRepoPath —
+ * only against the same traversal/control-character rules.
+ */
+export function isSafePdfPath(path: string): boolean {
+  if (!path || path.length > 400) return false;
+  if (path.includes("..")) return false;
+  if (path.includes("\\") || path.startsWith("/")) return false;
+  if (/[\u0000-\u001f\u007f]/.test(path)) return false;
+  return true;
 }
 
 /**

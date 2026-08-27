@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getSubjects } from "@/lib/github";
 import { readFileFlags, setFlag } from "@/lib/fileFlags";
 import { addPasscode, listPasscodes, removePasscode } from "@/lib/passcodes";
+import { readDownloadCounts } from "@/lib/downloadCounts";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const CODE_RE = /^\d{6}$/;
@@ -17,11 +18,12 @@ export async function GET(req: NextRequest) {
   const action = req.nextUrl.searchParams.get("action");
 
   if (action === "subjects") {
-    const [subjects, flags] = await Promise.all([
+    const [subjects, flags, downloadCounts] = await Promise.all([
       getSubjects({ includeHidden: true }),
       readFileFlags(),
+      readDownloadCounts(),
     ]);
-    return NextResponse.json({ subjects, flags });
+    return NextResponse.json({ subjects, flags, downloadCounts });
   }
 
   if (action === "passcodes") {

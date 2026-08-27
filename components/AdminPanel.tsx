@@ -22,6 +22,7 @@ export default function AdminPanel() {
 
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [flags, setFlags] = useState<FileFlagsMap>({});
+  const [downloadCounts, setDownloadCounts] = useState<Record<string, number>>({});
   const [codes, setCodes] = useState<Passcode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,6 +40,7 @@ export default function AdminPanel() {
       .then((data) => {
         setSubjects(data.subjects);
         setFlags(data.flags);
+        setDownloadCounts(data.downloadCounts ?? {});
       })
       .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
       .finally(() => setLoading(false));
@@ -192,6 +194,7 @@ export default function AdminPanel() {
                       index={i}
                       hidden={Boolean(flags[f.path]?.hidden)}
                       locked={Boolean(flags[f.path]?.locked)}
+                      downloadCount={downloadCounts[f.path] ?? 0}
                       onToggleHide={() => toggleFlag(f.path, "toggleHide", Boolean(flags[f.path]?.hidden))}
                       onToggleLock={() => toggleFlag(f.path, "toggleLock", Boolean(flags[f.path]?.locked))}
                     />

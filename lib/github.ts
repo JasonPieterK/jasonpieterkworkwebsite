@@ -1,6 +1,7 @@
 import type { ChangelogEntry, ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
 import { readFileFlags } from "./fileFlags";
+import { githubAuthHeaders } from "./githubAuth";
 
 // Fallback TTL — a push notifies app/api/revalidate, which drops the tag below
 // immediately; this only bounds staleness if that notification never arrives.
@@ -15,18 +16,13 @@ const HIDDEN_FILES = new Set([".gitkeep"]);
 // New/Updated badges expire once their commit is more than this many commits behind HEAD (repo-wide).
 const BADGE_COMMIT_WINDOW = 3;
 
-function authHeaders(): Record<string, string> {
-  const token = process.env.GITHUB_TOKEN;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 class RateLimitError extends Error {}
 
 async function ghFetch<T>(url: string): Promise<T> {
   const res = await fetch(url, {
     headers: {
       Accept: "application/vnd.github+json",
-      ...authHeaders(),
+      ...githubAuthHeaders(),
     },
     next: { revalidate: REVALIDATE_SECONDS, tags: [GITHUB_CACHE_TAG] },
   });

@@ -82,6 +82,15 @@
   color: var(--ash);
 }
 
+.downloadRow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  color: var(--ash);
+}
+
 .actions {
   display: flex;
   gap: var(--s-2);

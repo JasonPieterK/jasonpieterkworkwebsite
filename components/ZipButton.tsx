@@ -61,7 +61,8 @@ export default function ZipButton({
               } individually.`
             );
           }
-        }
+        },
+        `zip:${subjectSlug}${semester ? `/${semester}` : ""}`
       );
       confettiScreen();
     } catch (err) {

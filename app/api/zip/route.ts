@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSubject } from "@/lib/github";
 import { ROOT_PREFIX } from "@/lib/repoLinks";
+import { githubAuthHeaders } from "@/lib/githubAuth";
 import { createZip, type ZipEntry } from "@/lib/zip";
 
 export const revalidate = 600;
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
   const results = await mapWithLimit(files, CONCURRENCY, async (f) => {
       // no-store: raw files routinely exceed the 2MB data-cache limit, and
       // trying to cache them just logs errors for every large file.
-      const res = await fetch(f.downloadUrl, { cache: "no-store" });
+      const res = await fetch(f.downloadUrl, { cache: "no-store", headers: githubAuthHeaders() });
       if (!res.ok) return null; // one missing file shouldn't kill the whole archive
       const entry: ZipEntry = {
         name: entryName(f),

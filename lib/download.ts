@@ -8,7 +8,8 @@ export async function downloadWithProgress(
   fallbackName: string,
   onProgress: (pct: number | null, receivedBytes: number) => void,
   signal?: AbortSignal,
-  onResponse?: (res: Response) => void
+  onResponse?: (res: Response) => void,
+  trackKey?: string
 ): Promise<void> {
   const res = await fetch(url, { signal });
   if (!res.ok) throw new Error(`Download failed (${res.status})`);
@@ -48,6 +49,15 @@ export async function downloadWithProgress(
   // purpose — with "always ask where to save" enabled, revoking after a few
   // seconds produces a failed or 0-byte file while the dialog is still open.
   setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
+
+  if (trackKey) {
+    fetch("/api/track-download", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key: trackKey }),
+      keepalive: true,
+    }).catch(() => {});
+  }
 }
 
 function filenameFrom(header: string | null): string | null {

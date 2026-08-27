@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { EyeSlash, LockSimple, LockSimpleOpen, Eye } from "@phosphor-icons/react";
+import { DownloadSimple, EyeSlash, LockSimple, LockSimpleOpen, Eye } from "@phosphor-icons/react";
 import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate } from "@/lib/utils";
 import FileIcon from "./FileIcon";
@@ -10,6 +10,7 @@ export default function AdminFileCard({
   index = 0,
   hidden,
   locked,
+  downloadCount = 0,
   onToggleHide,
   onToggleLock,
 }: {
@@ -17,6 +18,7 @@ export default function AdminFileCard({
   index?: number;
   hidden: boolean;
   locked: boolean;
+  downloadCount?: number;
   onToggleHide: () => void;
   onToggleLock: () => void;
 }) {
@@ -36,6 +38,10 @@ export default function AdminFileCard({
         <span className={styles.chip}>{extLabel(file.name)}</span>
         {size && <span className={styles.chip}>{size}</span>}
         <span className={styles.date}>{file.lastCommitDate ? formatDate(file.lastCommitDate) : "—"}</span>
+      </div>
+      <div className={styles.downloadRow}>
+        <DownloadSimple size={13} weight="bold" />
+        {downloadCount} {downloadCount === 1 ? "download" : "downloads"}
       </div>
       <div className={styles.actions}>
         <button

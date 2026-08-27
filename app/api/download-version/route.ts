@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OWNER, REPO } from "@/lib/repoLinks";
+import { githubAuthHeaders } from "@/lib/githubAuth";
 import { contentDisposition, isSafeRef, isSafeRepoPath } from "@/lib/validate";
 
 export const revalidate = 3600;
@@ -31,6 +32,7 @@ export async function GET(req: NextRequest) {
   }
 
   const res = await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/${sha}/${encodeURI(path)}`, {
+    headers: githubAuthHeaders(),
     next: { revalidate: 3600 },
   });
   if (!res.ok) return NextResponse.json({ error: "not found" }, { status: res.status });

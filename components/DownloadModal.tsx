@@ -19,7 +19,7 @@ import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate } from "@/lib/utils";
 import FileIcon from "./FileIcon";
 import { getInlinePreview } from "@/lib/preview";
-import { prebuiltPdfUrlFor, rawUrlFor } from "@/lib/repoLinks";
+import { prebuiltPdfUrlFor, proxiedRawUrlFor } from "@/lib/repoLinks";
 import { downloadWithProgress } from "@/lib/download";
 import { confettiScreen } from "@/lib/confetti";
 import { canRenderDocx, printDocxAsPdf, type RenderStage } from "@/lib/docxRender";
@@ -134,9 +134,15 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     ? `/api/download-version?path=${encodeURIComponent(file.path)}&sha=${selected.sha}&date=${encodeURIComponent(
         selected.date
       )}&message=${encodeURIComponent(selected.message)}`
-    : file.downloadUrl;
-  const selectedRawUrl = selected?.sha ? rawUrlFor(file.path, selected.sha) : file.downloadUrl;
-  const preview = getInlinePreview(file.name, file.path, selectedRawUrl, selected?.sha || undefined);
+    : proxiedRawUrlFor(file.path);
+  const selectedRawUrl = proxiedRawUrlFor(file.path, selected?.sha || undefined);
+  // Google's viewer fetches this itself, so it needs a fully-qualified URL —
+  // a relative "/api/raw?..." only resolves against *our* origin, not theirs.
+  // Only read on the client (window is undefined during SSR); harmless
+  // because the preview that uses it never renders before the modal opens.
+  const absoluteRawUrl =
+    typeof window !== "undefined" ? `${window.location.origin}${selectedRawUrl}` : selectedRawUrl;
+  const preview = getInlinePreview(file.name, file.path, absoluteRawUrl, selected?.sha || undefined);
 
   async function startDownload() {
     if (dl.status === "working") return;
@@ -149,7 +155,9 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
         downloadHref,
         file.name,
         (pct, bytes) => setDl({ status: "working", pct, bytes }),
-        controller.signal
+        controller.signal,
+        undefined,
+        file.path
       );
       setDl((d) => ({ status: "done", pct: 100, bytes: d.bytes }));
       confettiScreen();
@@ -186,7 +194,10 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
           await downloadWithProgress(
             prebuilt,
             file.name.replace(/\.docx?$/i, ".pdf"),
-            (pct, bytes) => setDl({ status: "working", pct, bytes })
+            (pct, bytes) => setDl({ status: "working", pct, bytes }),
+            undefined,
+            undefined,
+            file.path
           );
           setDl((d) => ({ status: "done", pct: 100, bytes: d.bytes }));
           setPdf({ stage: null });

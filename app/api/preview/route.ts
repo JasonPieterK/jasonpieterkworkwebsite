@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { OWNER, REPO, BRANCH } from "@/lib/repoLinks";
+import { githubAuthHeaders } from "@/lib/githubAuth";
 import { isSafeRef, isSafeRepoPath } from "@/lib/validate";
 
 export const revalidate = 3600;
@@ -37,6 +38,7 @@ export async function GET(req: NextRequest) {
   if (!mime) return NextResponse.json({ error: "not previewable" }, { status: 415 });
 
   const res = await fetch(`https://raw.githubusercontent.com/${OWNER}/${REPO}/${sha}/${encodeURI(path)}`, {
+    headers: githubAuthHeaders(),
     next: { revalidate: 3600 },
   });
   if (!res.ok) return NextResponse.json({ error: "not found" }, { status: res.status });
