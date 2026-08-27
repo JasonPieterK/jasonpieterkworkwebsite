@@ -30,6 +30,36 @@
   font-size: var(--fs-small);
 }
 
+.passwordField {
+  position: relative;
+}
+
+.passwordInput {
+  width: 100%;
+  padding-right: 46px;
+}
+
+.visibilityToggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ash);
+  cursor: pointer;
+}
+.visibilityToggle:hover {
+  color: var(--ink);
+  background: var(--bone);
+}
+
 .error {
   color: var(--coral);
   font-size: var(--fs-small);

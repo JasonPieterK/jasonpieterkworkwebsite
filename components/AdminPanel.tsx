@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { Eye, EyeSlash } from "@phosphor-icons/react";
 import type { Subject } from "@/lib/types";
 import AdminHeader from "./AdminHeader";
 import AdminSubjectCard from "./AdminSubjectCard";
@@ -14,6 +15,7 @@ type Passcode = { id: string; code: string; label: string; createdAt: string };
 
 export default function AdminPanel() {
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [loginError, setLoginError] = useState("");
   const [loginLoading, setLoginLoading] = useState(false);
@@ -95,15 +97,25 @@ export default function AdminPanel() {
         <h2 className={styles.loginTitle}>Admin access</h2>
         <div className={styles.formGroup}>
           <label htmlFor="password">Password</label>
-          <input
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Enter admin password"
-            className="mmm-input"
-            autoFocus
-          />
+          <div className={styles.passwordField}>
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter admin password"
+              className={`mmm-input ${styles.passwordInput}`}
+              autoFocus
+            />
+            <button
+              type="button"
+              className={styles.visibilityToggle}
+              onClick={() => setShowPassword((v) => !v)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeSlash size={18} weight="bold" /> : <Eye size={18} weight="bold" />}
+            </button>
+          </div>
         </div>
         {loginError && <p className={styles.error}>{loginError}</p>}
         <button type="submit" className="mmm-btn" disabled={loginLoading || !password}>
