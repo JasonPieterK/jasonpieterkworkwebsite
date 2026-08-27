@@ -54,7 +54,6 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
   const [pdf, setPdf] = useState<{ stage: RenderStage | null; error?: string }>({ stage: null });
   const [showPreview, setShowPreview] = useState(false);
   const [isLocked, setIsLocked] = useState(false);
-  const [lockCheckLoading, setLockCheckLoading] = useState(false);
   const [isUnlocked, setIsUnlocked] = useState(false);
   const shell = useExitAnimation(open, 280);
   const warnShell = useExitAnimation(confirming !== null, 280);
@@ -69,6 +68,16 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     [file.lastCommitDate, file.lastCommitMessage]
   );
 
+  function fetchVersions() {
+    if (versions !== null || loading) return;
+    setLoading(true);
+    fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
+      .then((r) => r.json())
+      .then((data) => setVersions(Array.isArray(data) ? data : []))
+      .catch(() => setVersions([]))
+      .finally(() => setLoading(false));
+  }
+
   function openModal() {
     setSelected(latest);
     setPickerOpen(false);
@@ -77,35 +86,13 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     setOpen(true);
     setIsUnlocked(false);
 
-    // Check if file is locked
-    setLockCheckLoading(true);
-    checkIfFileLocked(file.path)
-      .then((locked) => setIsLocked(locked))
-      .finally(() => setLockCheckLoading(false));
-
-    // Version history is fetched once, on first open — a click is the trigger,
-    // so it belongs here rather than in an effect watching `open`.
-    if (versions === null && !loading && isUnlocked) {
-      setLoading(true);
-      fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
-        .then((r) => r.json())
-        .then((data) => setVersions(Array.isArray(data) ? data : []))
-        .catch(() => setVersions([]))
-        .finally(() => setLoading(false));
-    }
+    checkIfFileLocked(file.path).then((locked) => {
+      setIsLocked(locked);
+      // Version history is fetched once, on first open — a click is the
+      // trigger — but only once we know the file isn't gated behind a password.
+      if (!locked) fetchVersions();
+    });
   }
-
-  useEffect(() => {
-    if (!open || isLocked || !isUnlocked) return;
-    if (versions === null && !loading) {
-      setLoading(true);
-      fetch(`/api/versions?path=${encodeURIComponent(file.path)}`)
-        .then((r) => r.json())
-        .then((data) => setVersions(Array.isArray(data) ? data : []))
-        .catch(() => setVersions([]))
-        .finally(() => setLoading(false));
-    }
-  }, [open, isUnlocked, isLocked, versions, loading, file.path]);
 
   useEffect(() => {
     if (!open) return;
@@ -223,6 +210,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     if (success) {
       setIsUnlocked(true);
       setIsLocked(false);
+      fetchVersions();
     }
     return success;
   }
@@ -312,12 +300,7 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
         Open
       </button>
       {open && isLocked && !isUnlocked && (
-        <FileLockPrompt
-          fileName={file.name}
-          filePath={file.path}
-          onUnlock={handleUnlock}
-          onCancel={() => setOpen(false)}
-        />
+        <FileLockPrompt fileName={file.name} onUnlock={handleUnlock} onCancel={() => setOpen(false)} />
       )}
       {shell.mounted &&
         mounted &&

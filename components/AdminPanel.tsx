@@ -1,227 +1,195 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { getSubjects } from "@/lib/github";
-import type { Subject, FileEntry, SemesterGroup } from "@/lib/types";
+import { useState, useCallback } from "react";
+import type { Subject } from "@/lib/types";
+import AdminHeader from "./AdminHeader";
+import AdminSubjectCard from "./AdminSubjectCard";
+import AdminFileCard from "./AdminFileCard";
+import AdminSettings from "./AdminSettings";
 import styles from "./AdminPanel.module.css";
 
-type LockedFiles = Record<string, { locked: boolean; password?: string }>;
+type View = "subjects" | "subject" | "settings";
+type FileFlagsMap = Record<string, { hidden?: boolean; locked?: boolean }>;
+type Passcode = { id: string; code: string; label: string; createdAt: string };
 
 export default function AdminPanel() {
   const [password, setPassword] = useState("");
-  const [authenticated, setAuthenticated] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
   const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [lockedFiles, setLockedFiles] = useState<LockedFiles>({});
+  const [flags, setFlags] = useState<FileFlagsMap>({});
+  const [codes, setCodes] = useState<Passcode[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [selectedFilePath, setSelectedFilePath] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [actionLoading, setActionLoading] = useState(false);
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
+  const [view, setView] = useState<View>("subjects");
+  const [activeSlug, setActiveSlug] = useState<string | null>(null);
 
-    fetch("/api/admin?action=list", {
-      headers: { Authorization: `Bearer ${password}` },
-    })
+  const loadSubjects = useCallback((authToken: string) => {
+    setLoading(true);
+    fetch("/api/admin?action=subjects", { headers: { Authorization: `Bearer ${authToken}` } })
       .then((r) => {
-        if (!r.ok) throw new Error("Invalid password");
+        if (!r.ok) throw new Error("Session expired");
         return r.json();
       })
       .then((data) => {
-        setAuthenticated(true);
-        setLockedFiles(data);
+        setSubjects(data.subjects);
+        setFlags(data.flags);
       })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Auth failed");
-      });
-  };
-
-  useEffect(() => {
-    if (!authenticated) return;
-    setLoading(true);
-    getSubjects()
-      .then(setSubjects)
-      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load subjects"))
+      .catch((err) => setError(err instanceof Error ? err.message : "Failed to load"))
       .finally(() => setLoading(false));
-  }, [authenticated]);
+  }, []);
 
-  const handleLockFile = async () => {
-    if (!selectedFilePath || !newPassword) {
-      setError("Select file and enter password");
-      return;
-    }
-    setActionLoading(true);
-    setError("");
+  const loadPasscodes = useCallback((authToken: string) => {
+    fetch("/api/admin?action=passcodes", { headers: { Authorization: `Bearer ${authToken}` } })
+      .then((r) => r.json())
+      .then((data) => setCodes(data.codes ?? []))
+      .catch(() => {});
+  }, []);
+
+  async function handleLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
     try {
       const res = await fetch("/api/admin", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${password}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "lock",
-          path: selectedFilePath,
-          password: newPassword,
-        }),
+        headers: { Authorization: `Bearer ${password}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login" }),
       });
-      if (!res.ok) throw new Error("Failed to lock file");
-      setLockedFiles((prev) => ({
-        ...prev,
-        [selectedFilePath]: { locked: true, password: newPassword },
-      }));
-      setSelectedFilePath("");
-      setNewPassword("");
+      if (!res.ok) throw new Error("Invalid password");
+      setToken(password);
+      loadSubjects(password);
+      loadPasscodes(password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error locking file");
+      setLoginError(err instanceof Error ? err.message : "Login failed");
     } finally {
-      setActionLoading(false);
+      setLoginLoading(false);
     }
-  };
+  }
 
-  const handleUnlockFile = async (filePath: string) => {
-    setActionLoading(true);
-    setError("");
+  async function toggleFlag(filePath: string, key: "toggleHide" | "toggleLock", currentValue: boolean) {
+    if (!token) return;
     try {
       const res = await fetch("/api/admin", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${password}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "unlock",
-          path: filePath,
-        }),
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ action: key, path: filePath, value: !currentValue }),
       });
-      if (!res.ok) throw new Error("Failed to unlock file");
-      setLockedFiles((prev) => {
-        const newLocked = { ...prev };
-        delete newLocked[filePath];
-        return newLocked;
-      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to update");
+      setFlags(data.flags);
+      // Hiding drops the file from the public listing next revalidate, but the
+      // admin view keeps it visible — re-fetch to stay in sync with fileCount badges.
+      loadSubjects(token);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error unlocking file");
-    } finally {
-      setActionLoading(false);
+      setError(err instanceof Error ? err.message : "Error updating file");
     }
-  };
+  }
 
-  if (!authenticated) {
+  if (!token) {
     return (
       <form onSubmit={handleLogin} className={styles.loginForm}>
+        <h2 className={styles.loginTitle}>Admin access</h2>
         <div className={styles.formGroup}>
-          <label htmlFor="password">Admin Password</label>
+          <label htmlFor="password">Password</label>
           <input
             id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter admin password"
-            className={styles.input}
+            className="mmm-input"
+            autoFocus
           />
         </div>
-        {error && <p className={styles.error}>{error}</p>}
-        <button type="submit" className={styles.button}>
-          Login
+        {loginError && <p className={styles.error}>{loginError}</p>}
+        <button type="submit" className="mmm-btn" disabled={loginLoading || !password}>
+          {loginLoading ? "Checking…" : "Login"}
         </button>
       </form>
     );
   }
 
-  const allFiles: (FileEntry & { subjectName: string })[] = [];
-  subjects.forEach((subject) => {
-    subject.semesters.forEach((semester) => {
-      semester.files.forEach((file) => {
-        allFiles.push({ ...file, subjectName: subject.name });
-      });
-    });
-  });
+  const activeSubject = subjects.find((s) => s.slug === activeSlug) ?? null;
+  const lockedCountFor = (subject: Subject) =>
+    subject.semesters.flatMap((g) => g.files).filter((f) => flags[f.path]?.locked).length;
+  const hiddenCountFor = (subject: Subject) =>
+    subject.semesters.flatMap((g) => g.files).filter((f) => flags[f.path]?.hidden).length;
 
   return (
-    <div className={styles.panel}>
-      <button onClick={() => setAuthenticated(false)} className={styles.logoutBtn}>
-        Logout
-      </button>
+    <div>
+      <AdminHeader
+        view={view}
+        onBack={() => {
+          setView("subjects");
+          setActiveSlug(null);
+        }}
+        onSettings={() => setView("settings")}
+        onLogout={() => {
+          setToken(null);
+          setPassword("");
+          setView("subjects");
+        }}
+      />
 
-      <section className={styles.section}>
-        <h2>Lock a File</h2>
-        <div className={styles.formGroup}>
-          <label htmlFor="fileSelect">File</label>
-          <select
-            id="fileSelect"
-            value={selectedFilePath}
-            onChange={(e) => setSelectedFilePath(e.target.value)}
-            className={styles.select}
-          >
-            <option value="">Select a file...</option>
-            {allFiles
-              .filter((f) => !lockedFiles[f.path]?.locked)
-              .map((f) => (
-                <option key={f.path} value={f.path}>
-                  {f.subjectName} / {f.name}
-                </option>
+      {error && <p className={styles.error}>{error}</p>}
+
+      {view === "settings" && <AdminSettings token={token} codes={codes} onCodesChange={setCodes} />}
+
+      {view === "subjects" && (
+        <>
+          {loading ? (
+            <p className={styles.hint}>Loading…</p>
+          ) : (
+            <div className={styles.grid}>
+              {subjects.map((s, i) => (
+                <AdminSubjectCard
+                  key={s.slug}
+                  subject={s}
+                  index={i}
+                  lockedCount={lockedCountFor(s)}
+                  hiddenCount={hiddenCountFor(s)}
+                  onClick={() => {
+                    setActiveSlug(s.slug);
+                    setView("subject");
+                  }}
+                />
               ))}
-          </select>
+            </div>
+          )}
+        </>
+      )}
+
+      {view === "subject" && activeSubject && (
+        <div>
+          <h2 className={styles.subjectTitle}>{activeSubject.name}</h2>
+          {activeSubject.semesters.map((group) => (
+            <div key={group.semester} className={styles.semesterBlock}>
+              <h3 className={styles.semesterName}>{group.semester}</h3>
+              {group.files.length === 0 ? (
+                <p className={styles.hint}>No files.</p>
+              ) : (
+                <div className={styles.fileGrid}>
+                  {group.files.map((f, i) => (
+                    <AdminFileCard
+                      key={f.path}
+                      file={f}
+                      index={i}
+                      hidden={Boolean(flags[f.path]?.hidden)}
+                      locked={Boolean(flags[f.path]?.locked)}
+                      onToggleHide={() => toggleFlag(f.path, "toggleHide", Boolean(flags[f.path]?.hidden))}
+                      onToggleLock={() => toggleFlag(f.path, "toggleLock", Boolean(flags[f.path]?.locked))}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
-
-        <div className={styles.formGroup}>
-          <label htmlFor="newPassword">Password</label>
-          <input
-            id="newPassword"
-            type="password"
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Enter password students must know"
-            className={styles.input}
-          />
-        </div>
-
-        {error && <p className={styles.error}>{error}</p>}
-        <button
-          onClick={handleLockFile}
-          disabled={actionLoading || !selectedFilePath || !newPassword}
-          className={styles.button}
-        >
-          {actionLoading ? "Locking..." : "Lock File"}
-        </button>
-      </section>
-
-      <section className={styles.section}>
-        <h2>Locked Files ({Object.keys(lockedFiles).length})</h2>
-        {Object.keys(lockedFiles).length === 0 ? (
-          <p className={styles.empty}>No locked files yet.</p>
-        ) : (
-          <div className={styles.lockedList}>
-            {Object.entries(lockedFiles)
-              .filter(([, data]) => data.locked)
-              .map(([filePath]) => {
-                const file = allFiles.find((f) => f.path === filePath);
-                return (
-                  <div key={filePath} className={styles.lockedItem}>
-                    <div>
-                      <p className={styles.lockedName}>{file?.name || filePath}</p>
-                      {file && (
-                        <p className={styles.lockedSubject}>
-                          {file.subjectName}
-                        </p>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => handleUnlockFile(filePath)}
-                      disabled={actionLoading}
-                      className={styles.unlockBtn}
-                    >
-                      Unlock
-                    </button>
-                  </div>
-                );
-              })}
-          </div>
-        )}
-      </section>
+      )}
     </div>
   );
 }

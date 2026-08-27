@@ -1,13 +1,14 @@
+import type { Metadata } from "next";
 import AdminPanel from "@/components/AdminPanel";
-import styles from "./page.module.css";
+
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default function AdminPage() {
   return (
     <main className="container">
-      <div className={styles.adminContainer}>
-        <h1 className={styles.title}>Admin Panel</h1>
-        <AdminPanel />
-      </div>
+      <AdminPanel />
     </main>
   );
 }

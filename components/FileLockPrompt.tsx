@@ -7,12 +7,10 @@ import styles from "./FileLockPrompt.module.css";
 
 export default function FileLockPrompt({
   fileName,
-  filePath,
   onUnlock,
   onCancel,
 }: {
   fileName: string;
-  filePath: string;
   onUnlock: (password: string) => Promise<boolean>;
   onCancel: () => void;
 }) {

@@ -1,64 +1,71 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-import { hashPassword } from "@/lib/passwordHash";
+import { getSubjects } from "@/lib/github";
+import { readFileFlags, setFlag } from "@/lib/fileFlags";
+import { addPasscode, listPasscodes, removePasscode } from "@/lib/passcodes";
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
-const DATA_FILE = path.join(process.cwd(), "data", "locked-files.json");
-
-async function getLockedFiles() {
-  try {
-    const data = await fs.readFile(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
-
-async function saveLockedFiles(data: Record<string, any>) {
-  await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2));
-}
+const CODE_RE = /^\d{6}$/;
 
 function checkAuth(req: NextRequest): boolean {
-  const auth = req.headers.get("authorization");
-  const token = auth?.replace("Bearer ", "");
-  if (!token) return false;
-  return token === ADMIN_PASSWORD;
+  const token = req.headers.get("authorization")?.replace("Bearer ", "");
+  return Boolean(token) && token === ADMIN_PASSWORD;
+}
+
+export async function GET(req: NextRequest) {
+  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const action = req.nextUrl.searchParams.get("action");
+
+  if (action === "subjects") {
+    const [subjects, flags] = await Promise.all([
+      getSubjects({ includeHidden: true }),
+      readFileFlags(),
+    ]);
+    return NextResponse.json({ subjects, flags });
+  }
+
+  if (action === "passcodes") {
+    return NextResponse.json({ codes: await listPasscodes() });
+  }
+
+  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 }
 
 export async function POST(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token || token !== ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  if (!checkAuth(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
     const body = await req.json();
-    const { action, path: filePath, password } = body;
+    const { action } = body;
 
-    const locked = await getLockedFiles();
+    if (action === "toggleHide" || action === "toggleLock") {
+      const { path: filePath, value } = body;
+      if (!filePath || typeof value !== "boolean") {
+        return NextResponse.json({ error: "path and value required" }, { status: 400 });
+      }
+      const key = action === "toggleHide" ? "hidden" : "locked";
+      const flags = await setFlag(filePath, key, value);
+      return NextResponse.json({ success: true, flags });
+    }
 
-    if (action === "lock") {
-      if (!filePath || !password) {
-        return NextResponse.json(
-          { error: "path and password required" },
-          { status: 400 }
-        );
+    if (action === "addPasscode") {
+      const { code, label } = body;
+      if (!CODE_RE.test(code)) {
+        return NextResponse.json({ error: "Code must be exactly 6 digits" }, { status: 400 });
       }
-      locked[filePath] = { password: hashPassword(password), locked: true };
-      await saveLockedFiles(locked);
+      const codes = await addPasscode(code, label || "");
+      return NextResponse.json({ success: true, codes });
+    }
+
+    if (action === "removePasscode") {
+      const { id } = body;
+      if (!id) return NextResponse.json({ error: "id required" }, { status: 400 });
+      const codes = await removePasscode(id);
+      return NextResponse.json({ success: true, codes });
+    }
+
+    if (action === "login") {
       return NextResponse.json({ success: true });
-    } else if (action === "unlock") {
-      if (!filePath) {
-        return NextResponse.json({ error: "path required" }, { status: 400 });
-      }
-      delete locked[filePath];
-      await saveLockedFiles(locked);
-      return NextResponse.json({ success: true });
-    } else if (action === "checkLock") {
-      return NextResponse.json({
-        isLocked: Boolean(locked[filePath]?.locked),
-      });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
@@ -68,28 +75,4 @@ export async function POST(req: NextRequest) {
       { status: 500 }
     );
   }
-}
-
-export async function GET(req: NextRequest) {
-  const token = req.headers.get("authorization")?.replace("Bearer ", "");
-  if (!token || token !== ADMIN_PASSWORD) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const action = req.nextUrl.searchParams.get("action");
-  const filePath = req.nextUrl.searchParams.get("path");
-
-  if (action === "checkLock" && filePath) {
-    const locked = await getLockedFiles();
-    return NextResponse.json({
-      isLocked: Boolean(locked[filePath]?.locked),
-    });
-  }
-
-  if (action === "list") {
-    const locked = await getLockedFiles();
-    return NextResponse.json(locked);
-  }
-
-  return NextResponse.json({ error: "Invalid action" }, { status: 400 });
 }

@@ -1,0 +1,49 @@
+.bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s-4);
+  padding: var(--s-4) 0;
+  border-bottom: var(--bw) solid var(--ink);
+  margin-bottom: var(--s-5);
+  flex-wrap: wrap;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: var(--fs-h4);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-caps);
+}
+
+.actions {
+  display: flex;
+  gap: var(--s-2);
+  flex-wrap: wrap;
+}
+
+.navBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 38px;
+  padding: 0 14px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+}
+.navBtn:hover {
+  background: var(--mode);
+  transform: translateY(-2px);
+  box-shadow: var(--sh-1);
+}
+.navBtnActive {
+  background: var(--median);
+  color: var(--paper);
+}

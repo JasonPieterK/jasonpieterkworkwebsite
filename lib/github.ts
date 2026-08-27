@@ -1,5 +1,6 @@
 import type { ChangelogEntry, ChangeKind, FileEntry, GithubTreeItem, Subject } from "./types";
 import { OWNER, REPO, BRANCH, ROOT_PREFIX } from "./repoLinks";
+import { readFileFlags } from "./fileFlags";
 
 // Fallback TTL — a push notifies app/api/revalidate, which drops the tag below
 // immediately; this only bounds staleness if that notification never arrives.
@@ -147,7 +148,8 @@ function subjectSlug(name: string): string {
   return base || "subject";
 }
 
-export async function getSubjects(): Promise<Subject[]> {
+export async function getSubjects(options: { includeHidden?: boolean } = {}): Promise<Subject[]> {
+  const { includeHidden = false } = options;
   let tree: GithubTreeItem[];
   try {
     tree = await fetchTree();
@@ -157,6 +159,7 @@ export async function getSubjects(): Promise<Subject[]> {
   }
   const blobPaths = new Set(tree.filter((t) => t.type === "blob").map((t) => t.path));
   const commitMap = await fetchLastCommitPerFile(blobPaths);
+  const fileFlags = await readFileFlags();
 
   const subjectMap = new Map<string, Subject>();
 
@@ -208,6 +211,7 @@ export async function getSubjects(): Promise<Subject[]> {
 
     const fileName = parts[parts.length - 1];
     if (HIDDEN_FILES.has(fileName)) continue;
+    if (!includeHidden && fileFlags[item.path]?.hidden) continue;
 
     const [subjectName, semesterName] = parts;
     const subject = getSubjectEntry(subjectName);

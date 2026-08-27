@@ -1,17 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "fs/promises";
-import path from "path";
-
-const DATA_FILE = path.join(process.cwd(), "data", "locked-files.json");
-
-async function getLockedFiles() {
-  try {
-    const data = await fs.readFile(DATA_FILE, "utf-8");
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
+import { readFileFlags } from "@/lib/fileFlags";
 
 export async function GET(req: NextRequest) {
   const filePath = req.nextUrl.searchParams.get("path");
@@ -19,8 +7,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "path required" }, { status: 400 });
   }
 
-  const locked = await getLockedFiles();
-  return NextResponse.json({
-    isLocked: Boolean(locked[filePath]?.locked),
-  });
+  const flags = await readFileFlags();
+  return NextResponse.json({ isLocked: Boolean(flags[filePath]?.locked) });
 }
