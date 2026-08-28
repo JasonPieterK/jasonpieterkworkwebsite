@@ -257,22 +257,36 @@
 }
 
 .barRow {
-  display: grid;
-  grid-template-columns: 100px 1fr 70px;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.barLabelRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: var(--s-3);
 }
 
 .barLabel {
   font-size: var(--fs-small);
   font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
   text-transform: capitalize;
+  /* Full label always visible — wraps rather than clipping a long filename
+     or subject name to a fixed-width column. */
+  overflow-wrap: anywhere;
+}
+
+.barTrackRow {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
 }
 
 .barTrack {
+  flex: 1;
+  min-width: 0;
   height: 10px;
   border-radius: var(--r-pill);
   background: var(--bone);
@@ -287,6 +301,7 @@
 }
 
 .barCount {
+  flex-shrink: 0;
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
   color: var(--ash);
@@ -398,8 +413,9 @@
 
 .sessionRow {
   display: flex;
-  align-items: center;
-  gap: var(--s-3);
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: var(--s-2) var(--s-3);
   padding: 8px var(--s-3);
   border: var(--bw-thin) solid var(--border-soft);
   border-radius: var(--r-sm);
@@ -418,10 +434,8 @@
 
 .sessionPath {
   flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  min-width: 200px;
+  overflow-wrap: anywhere;
 }
 
 .sessionStep {
@@ -440,9 +454,6 @@
 }
 
 @media (max-width: 640px) {
-  .barRow {
-    grid-template-columns: 70px 1fr 60px;
-  }
   .activityMeta {
     display: none;
   }

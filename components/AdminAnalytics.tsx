@@ -95,15 +95,17 @@ function BarList({ rows, total }: { rows: { label: string; count: number }[]; to
         const pct = total > 0 ? Math.round((r.count / total) * 100) : 0;
         return (
           <div key={r.label} className={styles.barRow}>
-            <span className={styles.barLabel} title={r.label}>
-              {r.label}
-            </span>
-            <div className={styles.barTrack}>
-              <div className={styles.barFill} style={{ width: `${pct}%` }} />
+            <div className={styles.barLabelRow}>
+              <span className={styles.barLabel}>{r.label}</span>
+              <span className={styles.barCount}>
+                {r.count} <span className={styles.barPct}>({pct}%)</span>
+              </span>
             </div>
-            <span className={styles.barCount}>
-              {r.count} <span className={styles.barPct}>({pct}%)</span>
-            </span>
+            <div className={styles.barTrackRow}>
+              <div className={styles.barTrack}>
+                <div className={styles.barFill} style={{ width: `${pct}%` }} />
+              </div>
+            </div>
           </div>
         );
       })}
