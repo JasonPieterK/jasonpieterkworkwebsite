@@ -43,6 +43,59 @@ function inferAppleModel(fallback: "iPhone" | "iPad"): string {
   return APPLE_MODELS[`${w}x${h}@${dpr}`] ?? `${fallback} (${w}x${h}@${dpr}x, unrecognized)`;
 }
 
+// Android reports its model directly in the UA — Pixel, Xiaomi/Redmi/POCO,
+// and OnePlus already send a human name ("Pixel 8", "Redmi Note 12"), no
+// translation needed. Samsung is the one major exception: it sends an
+// internal code ("SM-S918B") instead of "Galaxy S23 Ultra". Matched by
+// prefix since the trailing letter varies by region (B/U/N/W/F...).
+const SAMSUNG_PREFIXES: [prefix: string, name: string][] = [
+  ["SM-S928", "Galaxy S24 Ultra"],
+  ["SM-S926", "Galaxy S24+"],
+  ["SM-S921", "Galaxy S24"],
+  ["SM-S918", "Galaxy S23 Ultra"],
+  ["SM-S916", "Galaxy S23+"],
+  ["SM-S911", "Galaxy S23"],
+  ["SM-S901", "Galaxy S23 FE"],
+  ["SM-G998", "Galaxy S21 Ultra"],
+  ["SM-G996", "Galaxy S21+"],
+  ["SM-G991", "Galaxy S21"],
+  ["SM-G781", "Galaxy S20 FE"],
+  ["SM-G780", "Galaxy S20 FE"],
+  ["SM-G988", "Galaxy S20 Ultra"],
+  ["SM-G986", "Galaxy S20+"],
+  ["SM-G981", "Galaxy S20"],
+  ["SM-N986", "Galaxy Note 20 Ultra"],
+  ["SM-N981", "Galaxy Note 20"],
+  ["SM-F946", "Galaxy Z Fold 5"],
+  ["SM-F936", "Galaxy Z Fold 4"],
+  ["SM-F926", "Galaxy Z Fold 3"],
+  ["SM-F731", "Galaxy Z Flip 5"],
+  ["SM-F721", "Galaxy Z Flip 4"],
+  ["SM-A566", "Galaxy A56"],
+  ["SM-A556", "Galaxy A55"],
+  ["SM-A546", "Galaxy A54"],
+  ["SM-A536", "Galaxy A53"],
+  ["SM-A346", "Galaxy A34"],
+  ["SM-A336", "Galaxy A33"],
+  ["SM-A256", "Galaxy A25"],
+  ["SM-A245", "Galaxy A24"],
+  ["SM-A235", "Galaxy A23"],
+  ["SM-A155", "Galaxy A15"],
+  ["SM-A145", "Galaxy A14"],
+  ["SM-A135", "Galaxy A13"],
+  ["SM-A125", "Galaxy A12"],
+  ["SM-A047", "Galaxy A04s"],
+  ["SM-A045", "Galaxy A04"],
+  ["SM-M356", "Galaxy M35"],
+  ["SM-M346", "Galaxy M34"],
+  ["SM-M336", "Galaxy M33"],
+];
+
+function inferAndroidModel(raw: string): string {
+  const match = SAMSUNG_PREFIXES.find(([prefix]) => raw.toUpperCase().startsWith(prefix));
+  return match ? match[1] : raw;
+}
+
 /**
  * Coarse client classification for the analytics dashboard — not meant to be
  * exact, just enough to answer "phone or laptop", "Chrome or Safari", and
@@ -80,7 +133,7 @@ export function getDeviceInfo(): DeviceInfo {
   else if (/iPad/i.test(ua)) deviceModel = inferAppleModel("iPad");
   else {
     const androidModel = /Android[^;]*;\s*([^)]+?)(?:\s+Build|\))/i.exec(ua);
-    if (androidModel?.[1]) deviceModel = androidModel[1].trim();
+    if (androidModel?.[1]) deviceModel = inferAndroidModel(androidModel[1].trim());
   }
 
   const screen =
