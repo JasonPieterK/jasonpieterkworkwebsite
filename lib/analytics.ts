@@ -150,12 +150,26 @@ function subjectFromPath(path: string): string {
   return parts[1] ?? parts[0] ?? path;
 }
 
+// How many rows of a detail table (downloads/visits/search/failed-unlock) get
+// sent to the client. The dashboard only ever shows the most recent slice —
+// sending all 5000 possible rows (each with a full user agent string) was
+// most of what made the page slow to load.
+const DETAIL_ROW_CAP = 300;
+
 export async function getAnalyticsSummary(range: TimeRange = "30d"): Promise<AnalyticsSummary> {
   const since = rangeStart(range);
 
-  let query = supabase.from("analytics_events").select("*").order("created_at", { ascending: false }).limit(5000);
-  if (since) query = query.gte("created_at", since);
-  const { data } = await query;
+  let eventsQuery = supabase.from("analytics_events").select("*").order("created_at", { ascending: false }).limit(5000);
+  if (since) eventsQuery = eventsQuery.gte("created_at", since);
+
+  // Both previously ran as sequential awaits (three round trips in a row);
+  // running them together roughly triples the load speed. download_counts is
+  // fetched once and reused for both "top files" (range=all) and the subject
+  // rollup, instead of two separate queries against the same table.
+  const [{ data }, { data: downloadCounts }] = await Promise.all([
+    eventsQuery,
+    supabase.from("download_counts").select("key, count").order("count", { ascending: false }),
+  ]);
 
   const eventRows = (data ?? []).map(toRawEvent);
   const downloadEvents = eventRows.filter((e) => e.kind === "download");
@@ -163,29 +177,20 @@ export async function getAnalyticsSummary(range: TimeRange = "30d"): Promise<Ana
   const searchEvents = eventRows.filter((e) => e.kind === "search");
   const failedUnlockEvents = eventRows.filter((e) => e.kind === "failed_unlock");
 
-  // Top files still reads from the all-time counter table — range-scoped
-  // "most downloaded" would need a group-by-key aggregate, which download
-  // events (bounded to 5000 rows) approximate below via downloadEvents when
-  // a range narrower than "all" is selected.
-  const { data: downloadCounts } = await supabase
-    .from("download_counts")
-    .select("key, count")
-    .order("count", { ascending: false })
-    .limit(20);
-
+  // Top files reads from the all-time counter table when showing all time —
+  // range-scoped "most downloaded" instead tallies the (bounded) download
+  // events fetched above, which approximates it for a narrower window.
   const topFiles =
     range === "all"
-      ? (downloadCounts ?? []).map((r) => ({ key: r.key, count: r.count }))
+      ? (downloadCounts ?? []).slice(0, 20).map((r) => ({ key: r.key, count: r.count }))
       : tally(downloadEvents.map((e) => e.key)).slice(0, 20).map((r) => ({ key: r.key, count: r.count }));
 
   const totalDownloads = range === "all" ? (downloadCounts ?? []).reduce((n, r) => n + r.count, 0) : downloadEvents.length;
 
-  // Subject popularity always reads the all-time counter table — it is a
-  // simple re-bucketing of the same keys "most downloaded files" already
-  // uses, just grouped one level up.
-  const { data: allDownloadCounts } = await supabase.from("download_counts").select("key, count");
+  // Subject popularity is a re-bucketing of the same download_counts rows,
+  // grouped one level up — no separate query needed.
   const subjectCounts = new Map<string, number>();
-  for (const r of allDownloadCounts ?? []) {
+  for (const r of downloadCounts ?? []) {
     const subject = subjectFromPath(r.key);
     subjectCounts.set(subject, (subjectCounts.get(subject) ?? 0) + r.count);
   }
@@ -258,10 +263,10 @@ export async function getAnalyticsSummary(range: TimeRange = "30d"): Promise<Ana
     searchQueries: tally(searchEvents.map((e) => e.key)).map((r) => ({ query: r.key, count: r.count })),
     peakHours,
     avgDurationSeconds,
-    downloadDetails: downloadEvents,
-    visitDetails: visitEvents,
-    searchDetails: searchEvents,
-    failedUnlockDetails: failedUnlockEvents,
+    downloadDetails: downloadEvents.slice(0, DETAIL_ROW_CAP),
+    visitDetails: visitEvents.slice(0, DETAIL_ROW_CAP),
+    searchDetails: searchEvents.slice(0, DETAIL_ROW_CAP),
+    failedUnlockDetails: failedUnlockEvents.slice(0, DETAIL_ROW_CAP),
     sessions,
     timeSeries,
     recentEvents: eventRows.slice(0, 100),

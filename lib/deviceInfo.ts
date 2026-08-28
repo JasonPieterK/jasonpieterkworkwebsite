@@ -133,7 +133,11 @@ export function getDeviceInfo(): DeviceInfo {
   else if (/iPad/i.test(ua)) deviceModel = inferAppleModel("iPad");
   else {
     const androidModel = /Android[^;]*;\s*([^)]+?)(?:\s+Build|\))/i.exec(ua);
-    if (androidModel?.[1]) deviceModel = inferAndroidModel(androidModel[1].trim());
+    const raw = androidModel?.[1]?.trim();
+    // Chrome's "User-Agent Reduction" replaces the real model with a single
+    // placeholder letter ("K") on some Android versions — a real model name
+    // is always longer than that, so anything this short isn't one.
+    if (raw && raw.length > 2) deviceModel = inferAndroidModel(raw);
   }
 
   const screen =
