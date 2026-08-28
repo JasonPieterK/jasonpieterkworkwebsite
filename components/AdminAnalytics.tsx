@@ -15,6 +15,7 @@ type RawEvent = {
   screen: string | null;
   language: string | null;
   userAgent: string | null;
+  ip: string | null;
   createdAt: string;
 };
 
@@ -283,6 +284,7 @@ export default function AdminAnalytics({ token }: { token: string }) {
                       <th>Model</th>
                       <th>Browser</th>
                       <th>OS</th>
+                      <th>IP</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -300,11 +302,15 @@ export default function AdminAnalytics({ token }: { token: string }) {
                           <td>{e.deviceModel ?? "—"}</td>
                           <td>{e.browser ?? "—"}</td>
                           <td>{e.os ?? "—"}</td>
+                          <td className={styles.tableTime}>{e.ip ?? "—"}</td>
                         </tr>
                         {expandedId === e.id && (
                           <tr className={styles.detailRow}>
-                            <td colSpan={6}>
+                            <td colSpan={7}>
                               <div className={styles.detailGrid}>
+                                <span>
+                                  <strong>IP:</strong> {e.ip || "—"}
+                                </span>
                                 <span>
                                   <strong>Screen:</strong> {e.screen || "—"}
                                 </span>
@@ -342,7 +348,8 @@ export default function AdminAnalytics({ token }: { token: string }) {
                         {e.kind === "download" ? e.key?.split("/").pop() : e.key}
                       </span>
                       <span className={styles.activityMeta}>
-                        {e.device ?? "?"} · {e.browser ?? "?"} · {e.os ?? "?"}
+                        {e.deviceModel ?? e.device ?? "?"} · {e.browser ?? "?"} · {e.os ?? "?"}
+                        {e.ip ? ` · ${e.ip}` : ""}
                       </span>
                       <span className={styles.activityTime}>{formatExact(e.createdAt)}</span>
                     </li>

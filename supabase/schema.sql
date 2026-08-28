@@ -54,6 +54,7 @@ alter table analytics_events add column if not exists device_model text;
 alter table analytics_events add column if not exists screen text;
 alter table analytics_events add column if not exists language text;
 alter table analytics_events add column if not exists user_agent text;
+alter table analytics_events add column if not exists ip text;
 
 -- The app only holds the publishable (anon) key — every admin write already
 -- goes through /api/admin, which checks ADMIN_PASSWORD before it ever touches

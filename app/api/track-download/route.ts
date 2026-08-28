@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { incrementDownload } from "@/lib/downloadCounts";
 import { logEvent } from "@/lib/analytics";
+import { getRequestIp } from "@/lib/requestIp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,7 +12,18 @@ export async function POST(req: NextRequest) {
     const safeKey = key.slice(0, 500);
     await Promise.all([
       incrementDownload(safeKey),
-      logEvent({ kind: "download", key: safeKey, device, browser, os, deviceModel, screen, language, userAgent }),
+      logEvent({
+        kind: "download",
+        key: safeKey,
+        device,
+        browser,
+        os,
+        deviceModel,
+        screen,
+        language,
+        userAgent,
+        ip: getRequestIp(req) ?? undefined,
+      }),
     ]);
     return NextResponse.json({ success: true });
   } catch {

@@ -161,6 +161,7 @@ export default function AdminPanel() {
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter admin password"
               className={`mmm-input ${styles.passwordInput}`}
+              autoComplete={rememberMe ? "current-password" : "off"}
               autoFocus
             />
             <button

@@ -10,6 +10,8 @@ export type AnalyticsEvent = {
   screen?: string;
   language?: string;
   userAgent?: string;
+  /** Set server-side only (from request headers) — never trust a client-sent IP. */
+  ip?: string;
 };
 
 export async function logEvent(event: AnalyticsEvent): Promise<void> {
@@ -23,6 +25,7 @@ export async function logEvent(event: AnalyticsEvent): Promise<void> {
     screen: event.screen?.slice(0, 20) ?? null,
     language: event.language?.slice(0, 20) ?? null,
     user_agent: event.userAgent?.slice(0, 500) ?? null,
+    ip: event.ip?.slice(0, 64) ?? null,
   });
 }
 
@@ -37,6 +40,7 @@ export type RawEvent = {
   screen: string | null;
   language: string | null;
   userAgent: string | null;
+  ip: string | null;
   createdAt: string;
 };
 
@@ -89,6 +93,7 @@ function toRawEvent(e: Record<string, unknown>): RawEvent {
     screen: (e.screen as string) ?? null,
     language: (e.language as string) ?? null,
     userAgent: (e.user_agent as string) ?? null,
+    ip: (e.ip as string) ?? null,
     createdAt: e.created_at as string,
   };
 }

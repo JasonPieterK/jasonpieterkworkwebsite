@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { logEvent } from "@/lib/analytics";
+import { getRequestIp } from "@/lib/requestIp";
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,6 +15,7 @@ export async function POST(req: NextRequest) {
       screen,
       language,
       userAgent,
+      ip: getRequestIp(req) ?? undefined,
     });
     return NextResponse.json({ success: true });
   } catch {
