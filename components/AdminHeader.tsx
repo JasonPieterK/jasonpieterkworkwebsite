@@ -1,17 +1,19 @@
 "use client";
 
-import { ArrowLeft, GearSix, SignOut } from "@phosphor-icons/react";
+import { ArrowLeft, ChartBar, GearSix, SignOut } from "@phosphor-icons/react";
 import styles from "./AdminHeader.module.css";
 
 export default function AdminHeader({
   view,
   onBack,
   onSettings,
+  onAnalytics,
   onLogout,
 }: {
-  view: "subjects" | "subject" | "settings";
+  view: "subjects" | "subject" | "settings" | "analytics";
   onBack: () => void;
   onSettings: () => void;
+  onAnalytics: () => void;
   onLogout: () => void;
 }) {
   return (
@@ -24,6 +26,14 @@ export default function AdminHeader({
             <span>Back</span>
           </button>
         )}
+        <button
+          type="button"
+          className={`${styles.navBtn} ${view === "analytics" ? styles.navBtnActive : ""}`}
+          onClick={onAnalytics}
+        >
+          <ChartBar size={16} weight="bold" />
+          <span>Analytics</span>
+        </button>
         <button
           type="button"
           className={`${styles.navBtn} ${view === "settings" ? styles.navBtnActive : ""}`}

@@ -1,3 +1,5 @@
+import { getDeviceInfo } from "./deviceInfo";
+
 /**
  * Fetch a file with progress reporting, then hand it to the browser as a
  * save. `onProgress` gets 0–100, or null when the server sends no
@@ -54,7 +56,7 @@ export async function downloadWithProgress(
     fetch("/api/track-download", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: trackKey }),
+      body: JSON.stringify({ key: trackKey, ...getDeviceInfo() }),
       keepalive: true,
     }).catch(() => {});
   }

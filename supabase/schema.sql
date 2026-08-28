@@ -32,11 +32,24 @@ begin
 end;
 $$ language plpgsql;
 
+create table if not exists analytics_events (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  kind text not null,        -- 'download' | 'visit'
+  key text,                  -- file path for downloads, page path for visits
+  device text,                -- 'mobile' | 'tablet' | 'desktop'
+  browser text,
+  os text
+);
+create index if not exists analytics_events_created_at_idx on analytics_events (created_at desc);
+create index if not exists analytics_events_kind_idx on analytics_events (kind);
+
 -- The app only holds the publishable (anon) key — every admin write already
 -- goes through /api/admin, which checks ADMIN_PASSWORD before it ever touches
 -- Supabase. RLS stays off here rather than layering a second, redundant auth
 -- check the anon key can't satisfy without a service key. Download tracking
--- is intentionally open — it's anonymous counters, not admin data.
+-- and analytics are intentionally open — anonymous counters, not admin data.
 alter table file_flags disable row level security;
 alter table passcodes disable row level security;
 alter table download_counts disable row level security;
+alter table analytics_events disable row level security;

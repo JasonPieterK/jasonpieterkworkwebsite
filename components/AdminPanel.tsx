@@ -7,9 +7,10 @@ import AdminHeader from "./AdminHeader";
 import AdminSubjectCard from "./AdminSubjectCard";
 import AdminFileCard from "./AdminFileCard";
 import AdminSettings from "./AdminSettings";
+import AdminAnalytics from "./AdminAnalytics";
 import styles from "./AdminPanel.module.css";
 
-type View = "subjects" | "subject" | "settings";
+type View = "subjects" | "subject" | "settings" | "analytics";
 type FileFlagsMap = Record<string, { hidden?: boolean; locked?: boolean }>;
 type Passcode = { id: string; code: string; label: string; createdAt: string };
 
@@ -74,23 +75,31 @@ export default function AdminPanel() {
     }
   }
 
-  async function toggleFlag(filePath: string, key: "toggleHide" | "toggleLock", currentValue: boolean) {
+  // Optimistic: the pill and button flip the instant you click, before the
+  // network round trip. getSubjects({includeHidden:true}) already counts
+  // hidden files, so fileCount badges stay correct without a re-fetch — a
+  // failed request just rolls the local flag back and surfaces the error.
+  function toggleFlag(filePath: string, key: "toggleHide" | "toggleLock", currentValue: boolean) {
     if (!token) return;
-    try {
-      const res = await fetch("/api/admin", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ action: key, path: filePath, value: !currentValue }),
+    const flagKey = key === "toggleHide" ? "hidden" : "locked";
+    const nextValue = !currentValue;
+
+    setFlags((prev) => ({ ...prev, [filePath]: { ...prev[filePath], [flagKey]: nextValue } }));
+
+    fetch("/api/admin", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ action: key, path: filePath, value: nextValue }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update");
+        setFlags(data.flags);
+      })
+      .catch((err) => {
+        setFlags((prev) => ({ ...prev, [filePath]: { ...prev[filePath], [flagKey]: currentValue } }));
+        setError(err instanceof Error ? err.message : "Error updating file");
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to update");
-      setFlags(data.flags);
-      // Hiding drops the file from the public listing next revalidate, but the
-      // admin view keeps it visible — re-fetch to stay in sync with fileCount badges.
-      loadSubjects(token);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error updating file");
-    }
   }
 
   if (!token) {
@@ -142,6 +151,7 @@ export default function AdminPanel() {
           setActiveSlug(null);
         }}
         onSettings={() => setView("settings")}
+        onAnalytics={() => setView("analytics")}
         onLogout={() => {
           setToken(null);
           setPassword("");
@@ -152,6 +162,8 @@ export default function AdminPanel() {
       {error && <p className={styles.error}>{error}</p>}
 
       {view === "settings" && <AdminSettings token={token} codes={codes} onCodesChange={setCodes} />}
+
+      {view === "analytics" && <AdminAnalytics token={token} />}
 
       {view === "subjects" && (
         <>
