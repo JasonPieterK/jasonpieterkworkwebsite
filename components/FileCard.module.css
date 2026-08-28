@@ -117,6 +117,14 @@
   background: var(--median-50);
 }
 
+/* Comfortable tap target — 26px was fine for a mouse pointer, not a thumb. */
+@media (hover: none) {
+  .adminBtn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+}
+
 /* ---------- motion ---------- */
 
 @media (hover: hover) {

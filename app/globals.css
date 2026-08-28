@@ -6,6 +6,10 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  /* Stops the browser's own rubber-band bounce past the top/bottom edge —
+     without it the page visibly scrolls a little further than its content
+     before snapping back. */
+  overscroll-behavior-y: contain;
 }
 
 body {
