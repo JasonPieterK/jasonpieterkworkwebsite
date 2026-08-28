@@ -66,6 +66,17 @@
   flex-wrap: wrap;
 }
 
+.ipNote {
+  margin: 0 0 var(--s-4);
+  padding: var(--s-3) var(--s-4);
+  border-left: 3px solid var(--median);
+  background: var(--median-50);
+  border-radius: var(--r-sm);
+  font-size: var(--fs-small);
+  line-height: 1.6;
+  max-width: none;
+}
+
 .stat {
   display: flex;
   align-items: center;
@@ -224,6 +235,16 @@
 .tableFile {
   font-weight: 600;
   max-width: 220px;
+}
+
+.sessionCell {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--median);
+  background: var(--median-50);
+  border-radius: var(--r-pill);
+  padding: 2px 8px;
+  text-align: center;
 }
 
 .detailRow td {

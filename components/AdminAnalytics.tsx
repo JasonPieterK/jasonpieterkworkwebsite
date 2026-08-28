@@ -263,6 +263,9 @@ function EventDetailTable({
                 <th>OS</th>
                 <th>Location</th>
                 <th>IP</th>
+                <th title="Random id per browser (localStorage) — the reliable way to tell devices apart when several share one IP (same wifi/ISP).">
+                  Session
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -279,10 +282,11 @@ function EventDetailTable({
                     <td>{e.os ?? "—"}</td>
                     <td>{e.city && e.country ? `${e.city}, ${e.country}` : e.country ?? "—"}</td>
                     <td className={styles.tableTime}>{e.ip ?? "—"}</td>
+                    <td className={styles.sessionCell}>{e.sessionId ? e.sessionId.slice(0, 8) : "—"}</td>
                   </tr>
                   {expandedId === e.id && (
                     <tr className={styles.detailRow}>
-                      <td colSpan={8}>
+                      <td colSpan={9}>
                         <div className={styles.detailGrid}>
                           <span>
                             <strong>IP:</strong> {e.ip || "—"}
@@ -464,6 +468,14 @@ export default function AdminAnalytics({ token }: { token: string }) {
             </div>
           </div>
 
+          <p className={styles.ipNote}>
+            Many ISPs (and every shared wifi) put multiple devices behind one public IP, so the same
+            IP showing up for several rows below doesn&rsquo;t mean it&rsquo;s the same device — a
+            browser can&rsquo;t be identified by MAC address from a website at all (it never leaves
+            the local network). The <strong>Session</strong> column is the reliable per-device id
+            instead: a random code stored in that browser, unique per device even on a shared IP.
+          </p>
+
           <section className={`mmm-card ${styles.card} ${styles.chartCard}`}>
             <h3 className="h4">Activity over time</h3>
             <TimeSeriesChart data={summary.timeSeries} />
@@ -624,6 +636,7 @@ export default function AdminAnalytics({ token }: { token: string }) {
                         {e.deviceModel ?? e.device ?? "?"} · {e.browser ?? "?"} · {e.os ?? "?"}
                         {e.city ? ` · ${e.city}` : e.country ? ` · ${e.country}` : ""}
                         {e.ip ? ` · ${e.ip}` : ""}
+                        {e.sessionId ? ` · ${e.sessionId.slice(0, 8)}` : ""}
                       </span>
                       <span className={styles.activityTime}>{formatExact(e.createdAt)}</span>
                     </li>
