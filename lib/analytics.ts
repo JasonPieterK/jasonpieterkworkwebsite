@@ -55,6 +55,8 @@ export type AnalyticsSummary = {
   downloadsByDevice: { device: string; count: number }[];
   /** Every download in range, most detailed view — which device got which file, when. */
   downloadDetails: RawEvent[];
+  /** Every page visit in range, same shape — which device viewed which page, when. */
+  visitDetails: RawEvent[];
   /** One point per day in range: { date: "2026-08-27", downloads, visits }. */
   timeSeries: { date: string; downloads: number; visits: number }[];
   recentEvents: RawEvent[];
@@ -149,6 +151,7 @@ export async function getAnalyticsSummary(range: TimeRange = "30d"): Promise<Ana
     modelBreakdown: tally(eventRows.map((e) => e.deviceModel)).map((r) => ({ model: r.key, count: r.count })),
     downloadsByDevice: tally(downloadEvents.map((e) => e.device)).map((r) => ({ device: r.key, count: r.count })),
     downloadDetails: downloadEvents,
+    visitDetails: visitEvents,
     timeSeries,
     recentEvents: eventRows.slice(0, 100),
   };

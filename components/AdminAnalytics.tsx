@@ -29,6 +29,7 @@ type Summary = {
   modelBreakdown: { model: string; count: number }[];
   downloadsByDevice: { device: string; count: number }[];
   downloadDetails: RawEvent[];
+  visitDetails: RawEvent[];
   timeSeries: { date: string; downloads: number; visits: number }[];
   recentEvents: RawEvent[];
 };
@@ -145,6 +146,85 @@ function TimeSeriesChart({ data }: { data: { date: string; downloads: number; vi
         </span>
       </div>
     </div>
+  );
+}
+
+/** Shared row-per-event table with an expandable detail row — used for both downloads and visits. */
+function EventDetailTable({
+  title,
+  emptyText,
+  keyLabel,
+  events,
+  expandedId,
+  onToggle,
+}: {
+  title: string;
+  emptyText: string;
+  keyLabel: string;
+  events: RawEvent[];
+  expandedId: string | null;
+  onToggle: (id: string | null) => void;
+}) {
+  return (
+    <section className={`mmm-card ${styles.card} ${styles.wideCard}`}>
+      <h3 className="h4">{title}</h3>
+      {events.length === 0 ? (
+        <p className={styles.empty}>{emptyText}</p>
+      ) : (
+        <div className={styles.tableWrap}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Time</th>
+                <th>{keyLabel}</th>
+                <th>Device</th>
+                <th>Model</th>
+                <th>Browser</th>
+                <th>OS</th>
+                <th>IP</th>
+              </tr>
+            </thead>
+            <tbody>
+              {events.map((e) => (
+                <Fragment key={e.id}>
+                  <tr className={styles.tableRow} onClick={() => onToggle(expandedId === e.id ? null : e.id)}>
+                    <td className={styles.tableTime}>{formatExact(e.createdAt)}</td>
+                    <td className={styles.tableFile} title={e.key ?? ""}>
+                      {keyLabel === "File" ? e.key?.split("/").pop() ?? "—" : e.key ?? "—"}
+                    </td>
+                    <td>{e.device ?? "—"}</td>
+                    <td>{e.deviceModel ?? "—"}</td>
+                    <td>{e.browser ?? "—"}</td>
+                    <td>{e.os ?? "—"}</td>
+                    <td className={styles.tableTime}>{e.ip ?? "—"}</td>
+                  </tr>
+                  {expandedId === e.id && (
+                    <tr className={styles.detailRow}>
+                      <td colSpan={7}>
+                        <div className={styles.detailGrid}>
+                          <span>
+                            <strong>IP:</strong> {e.ip || "—"}
+                          </span>
+                          <span>
+                            <strong>Screen:</strong> {e.screen || "—"}
+                          </span>
+                          <span>
+                            <strong>Language:</strong> {e.language || "—"}
+                          </span>
+                          <span className={styles.detailUa}>
+                            <strong>User agent:</strong> {e.userAgent || "—"}
+                          </span>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 
@@ -269,68 +349,23 @@ export default function AdminAnalytics({ token }: { token: string }) {
             </section>
           </div>
 
-          <section className={`mmm-card ${styles.card} ${styles.wideCard}`}>
-            <h3 className="h4">What each device downloaded</h3>
-            {summary.downloadDetails.length === 0 ? (
-              <p className={styles.empty}>No downloads in this range.</p>
-            ) : (
-              <div className={styles.tableWrap}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th>Time</th>
-                      <th>File</th>
-                      <th>Device</th>
-                      <th>Model</th>
-                      <th>Browser</th>
-                      <th>OS</th>
-                      <th>IP</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {summary.downloadDetails.map((e) => (
-                      <Fragment key={e.id}>
-                        <tr
-                          className={styles.tableRow}
-                          onClick={() => setExpandedId(expandedId === e.id ? null : e.id)}
-                        >
-                          <td className={styles.tableTime}>{formatExact(e.createdAt)}</td>
-                          <td className={styles.tableFile} title={e.key ?? ""}>
-                            {e.key?.split("/").pop() ?? "—"}
-                          </td>
-                          <td>{e.device ?? "—"}</td>
-                          <td>{e.deviceModel ?? "—"}</td>
-                          <td>{e.browser ?? "—"}</td>
-                          <td>{e.os ?? "—"}</td>
-                          <td className={styles.tableTime}>{e.ip ?? "—"}</td>
-                        </tr>
-                        {expandedId === e.id && (
-                          <tr className={styles.detailRow}>
-                            <td colSpan={7}>
-                              <div className={styles.detailGrid}>
-                                <span>
-                                  <strong>IP:</strong> {e.ip || "—"}
-                                </span>
-                                <span>
-                                  <strong>Screen:</strong> {e.screen || "—"}
-                                </span>
-                                <span>
-                                  <strong>Language:</strong> {e.language || "—"}
-                                </span>
-                                <span className={styles.detailUa}>
-                                  <strong>User agent:</strong> {e.userAgent || "—"}
-                                </span>
-                              </div>
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
+          <EventDetailTable
+            title="What each device downloaded"
+            emptyText="No downloads in this range."
+            keyLabel="File"
+            events={summary.downloadDetails}
+            expandedId={expandedId}
+            onToggle={setExpandedId}
+          />
+
+          <EventDetailTable
+            title="What each device visited"
+            emptyText="No visits in this range."
+            keyLabel="Page"
+            events={summary.visitDetails}
+            expandedId={expandedId}
+            onToggle={setExpandedId}
+          />
 
           <section className={`mmm-card ${styles.card} ${styles.wideCard}`}>
             <h3 className="h4">Recent activity</h3>
