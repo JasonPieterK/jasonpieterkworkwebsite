@@ -43,6 +43,23 @@ export async function logEvent(event: AnalyticsEvent): Promise<string | null> {
   return data?.id ?? null;
 }
 
+/**
+ * Passcodes are 6 digits (1M combinations) and verify-password has no other
+ * throttle — without this, brute-forcing one is a few hours of unattended
+ * POSTs. Reuses the failed_unlock events already being logged instead of a
+ * separate rate-limit table.
+ */
+export async function countRecentFailedUnlocks(ip: string, minutes = 10): Promise<number> {
+  const since = new Date(Date.now() - minutes * 60_000).toISOString();
+  const { count } = await supabase
+    .from("analytics_events")
+    .select("id", { count: "exact", head: true })
+    .eq("kind", "failed_unlock")
+    .eq("ip", ip)
+    .gte("created_at", since);
+  return count ?? 0;
+}
+
 export async function logDuration(id: string, durationSeconds: number): Promise<void> {
   if (!id || !Number.isFinite(durationSeconds) || durationSeconds < 0) return;
   await supabase
@@ -292,7 +309,13 @@ const CSV_COLUMNS: (keyof RawEvent)[] = [
 ];
 
 function csvEscape(value: unknown): string {
-  const s = value === null || value === undefined ? "" : String(value);
+  let s = value === null || value === undefined ? "" : String(value);
+  // Every string field here (search query, referrer, device/browser/os) comes
+  // from an API anyone can POST arbitrary values to — not just a real
+  // browser. Excel/Sheets treats a leading =, +, -, or @ as a formula, so an
+  // exported CSV without this is a classic formula-injection vector. A
+  // leading apostrophe neutralises it without changing the visible value.
+  if (/^[=+\-@]/.test(s)) s = `'${s}`;
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 

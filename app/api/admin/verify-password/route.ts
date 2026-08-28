@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFileFlags } from "@/lib/fileFlags";
 import { verifyPasscode } from "@/lib/passcodes";
-import { logEvent } from "@/lib/analytics";
+import { logEvent, countRecentFailedUnlocks } from "@/lib/analytics";
 import { getRequestIp } from "@/lib/requestIp";
+
+const MAX_ATTEMPTS_PER_WINDOW = 8;
+const WINDOW_MINUTES = 10;
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,6 +14,17 @@ export async function POST(req: NextRequest) {
 
     if (!filePath || !password) {
       return NextResponse.json({ error: "path and password required" }, { status: 400 });
+    }
+
+    const ip = getRequestIp(req) ?? undefined;
+    if (ip) {
+      const recentFailures = await countRecentFailedUnlocks(ip, WINDOW_MINUTES);
+      if (recentFailures >= MAX_ATTEMPTS_PER_WINDOW) {
+        return NextResponse.json(
+          { error: "Too many attempts — try again later" },
+          { status: 429 }
+        );
+      }
     }
 
     const flags = await readFileFlags();
@@ -30,7 +44,7 @@ export async function POST(req: NextRequest) {
         os,
         deviceModel,
         sessionId,
-        ip: getRequestIp(req) ?? undefined,
+        ip,
       }).catch(() => {});
       return NextResponse.json({ error: "Invalid password" }, { status: 401 });
     }

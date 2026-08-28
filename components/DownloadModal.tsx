@@ -216,14 +216,14 @@ export default function DownloadModal({ file }: { file: FileEntry }) {
     }
   }
 
-  async function handleUnlock(password: string): Promise<boolean> {
-    const success = await verifyFilePassword(file.path, password);
-    if (success) {
+  async function handleUnlock(password: string): Promise<{ ok: boolean; error?: string }> {
+    const result = await verifyFilePassword(file.path, password);
+    if (result.ok) {
       setIsUnlocked(true);
       setIsLocked(false);
       fetchVersions();
     }
-    return success;
+    return result;
   }
 
   const working = dl.status === "working";

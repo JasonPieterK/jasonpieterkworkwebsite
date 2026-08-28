@@ -271,7 +271,19 @@ function EventDetailTable({
             <tbody>
               {events.map((e) => (
                 <Fragment key={e.id}>
-                  <tr className={styles.tableRow} onClick={() => onToggle(expandedId === e.id ? null : e.id)}>
+                  <tr
+                    className={styles.tableRow}
+                    role="button"
+                    tabIndex={0}
+                    aria-expanded={expandedId === e.id}
+                    onClick={() => onToggle(expandedId === e.id ? null : e.id)}
+                    onKeyDown={(ev) => {
+                      if (ev.key === "Enter" || ev.key === " ") {
+                        ev.preventDefault();
+                        onToggle(expandedId === e.id ? null : e.id);
+                      }
+                    }}
+                  >
                     <td className={styles.tableTime}>{formatExact(e.createdAt)}</td>
                     <td className={styles.tableFile} title={e.key ?? ""}>
                       {keyLabel === "File" ? e.key?.split("/").pop() ?? "—" : e.key ?? "—"}

@@ -11,7 +11,7 @@ export default function FileLockPrompt({
   onCancel,
 }: {
   fileName: string;
-  onUnlock: (password: string) => Promise<boolean>;
+  onUnlock: (password: string) => Promise<{ ok: boolean; error?: string }>;
   onCancel: () => void;
 }) {
   const [showField, setShowField] = useState(false);
@@ -25,9 +25,9 @@ export default function FileLockPrompt({
     setLoading(true);
 
     try {
-      const success = await onUnlock(password);
-      if (!success) {
-        setError("Incorrect code");
+      const result = await onUnlock(password);
+      if (!result.ok) {
+        setError(result.error || "Incorrect code");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to verify code");

@@ -18,10 +18,9 @@ export async function checkIfFileLocked(filePath: string): Promise<boolean> {
   }
 }
 
-export async function verifyFilePassword(
-  filePath: string,
-  password: string
-): Promise<boolean> {
+export type VerifyResult = { ok: boolean; error?: string };
+
+export async function verifyFilePassword(filePath: string, password: string): Promise<VerifyResult> {
   try {
     const { device, browser, os, deviceModel } = getDeviceInfo();
     const res = await fetch("/api/admin/verify-password", {
@@ -37,8 +36,10 @@ export async function verifyFilePassword(
         sessionId: getSessionId(),
       }),
     });
-    return res.ok;
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => null);
+    return { ok: false, error: data?.error };
   } catch {
-    return false;
+    return { ok: false };
   }
 }
