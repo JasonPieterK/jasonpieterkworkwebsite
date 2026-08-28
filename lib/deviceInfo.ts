@@ -61,3 +61,31 @@ export function getDeviceInfo(): DeviceInfo {
     userAgent: ua,
   };
 }
+
+const SESSION_KEY = "smp:session-id";
+
+/**
+ * One random id per browser, persisted in localStorage — lets the analytics
+ * dashboard group a visitor's visits and downloads into a session without
+ * fingerprinting anything. Regenerates only if storage is cleared.
+ */
+export function getSessionId(): string {
+  try {
+    let id = localStorage.getItem(SESSION_KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(SESSION_KEY, id);
+    }
+    return id;
+  } catch {
+    return "unknown";
+  }
+}
+
+export function getReferrer(): string {
+  try {
+    return document.referrer || "";
+  } catch {
+    return "";
+  }
+}

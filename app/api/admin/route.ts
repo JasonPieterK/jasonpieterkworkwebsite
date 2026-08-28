@@ -3,7 +3,7 @@ import { getSubjects } from "@/lib/github";
 import { readFileFlags, setFlag } from "@/lib/fileFlags";
 import { addPasscode, listPasscodes, removePasscode } from "@/lib/passcodes";
 import { readDownloadCounts } from "@/lib/downloadCounts";
-import { getAnalyticsSummary, type TimeRange } from "@/lib/analytics";
+import { getAnalyticsSummary, exportEventsCsv, type TimeRange } from "@/lib/analytics";
 
 const VALID_RANGES: TimeRange[] = ["1d", "7d", "30d", "all"];
 
@@ -37,6 +37,18 @@ export async function GET(req: NextRequest) {
     const rangeParam = req.nextUrl.searchParams.get("range") ?? "30d";
     const range = VALID_RANGES.includes(rangeParam as TimeRange) ? (rangeParam as TimeRange) : "30d";
     return NextResponse.json(await getAnalyticsSummary(range));
+  }
+
+  if (action === "exportCsv") {
+    const rangeParam = req.nextUrl.searchParams.get("range") ?? "30d";
+    const range = VALID_RANGES.includes(rangeParam as TimeRange) ? (rangeParam as TimeRange) : "30d";
+    const csv = await exportEventsCsv(range);
+    return new NextResponse(csv, {
+      headers: {
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="analytics-${range}.csv"`,
+      },
+    });
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });

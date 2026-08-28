@@ -2,7 +2,19 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { getDeviceInfo, getSessionId } from "@/lib/deviceInfo";
+import { hasConsent } from "@/lib/consent";
 import styles from "./SearchBar.module.css";
+
+function trackSearch(query: string) {
+  if (!hasConsent()) return;
+  fetch("/api/track-search", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query, ...getDeviceInfo(), sessionId: getSessionId() }),
+    keepalive: true,
+  }).catch(() => {});
+}
 
 export default function SearchBar() {
   const router = useRouter();
@@ -34,6 +46,7 @@ export default function SearchBar() {
       const q = next.trim();
       if (q) {
         router.push(`/search?q=${encodeURIComponent(q)}`);
+        trackSearch(q);
       } else if (window.location.pathname === "/search") {
         // Clearing the box should clear the results, not leave stale ones up.
         router.push("/search");

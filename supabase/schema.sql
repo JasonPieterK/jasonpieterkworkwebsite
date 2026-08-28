@@ -55,6 +55,12 @@ alter table analytics_events add column if not exists screen text;
 alter table analytics_events add column if not exists language text;
 alter table analytics_events add column if not exists user_agent text;
 alter table analytics_events add column if not exists ip text;
+alter table analytics_events add column if not exists session_id text;
+alter table analytics_events add column if not exists country text;
+alter table analytics_events add column if not exists city text;
+alter table analytics_events add column if not exists referrer text;
+alter table analytics_events add column if not exists duration_seconds integer;
+create index if not exists analytics_events_session_idx on analytics_events (session_id);
 
 -- The app only holds the publishable (anon) key — every admin write already
 -- goes through /api/admin, which checks ADMIN_PASSWORD before it ever touches

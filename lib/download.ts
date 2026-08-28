@@ -1,4 +1,5 @@
-import { getDeviceInfo } from "./deviceInfo";
+import { getDeviceInfo, getSessionId } from "./deviceInfo";
+import { hasConsent } from "./consent";
 
 /**
  * Fetch a file with progress reporting, then hand it to the browser as a
@@ -52,11 +53,11 @@ export async function downloadWithProgress(
   // seconds produces a failed or 0-byte file while the dialog is still open.
   setTimeout(() => URL.revokeObjectURL(objectUrl), 120_000);
 
-  if (trackKey) {
+  if (trackKey && hasConsent()) {
     fetch("/api/track-download", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ key: trackKey, ...getDeviceInfo() }),
+      body: JSON.stringify({ key: trackKey, ...getDeviceInfo(), sessionId: getSessionId() }),
       keepalive: true,
     }).catch(() => {});
   }

@@ -8,6 +8,10 @@ export default function Footer() {
         Made by Jason Pieter Kusumajaya ·{" "}
         <Link href="/license" className={`${styles.mono} ${styles.licenseLink}`}>
           MIT License
+        </Link>{" "}
+        ·{" "}
+        <Link href="/privacy" className={`${styles.mono} ${styles.licenseLink}`}>
+          Privacy Policy
         </Link>
       </p>
     </footer>

@@ -7,6 +7,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import TopProgress from "@/components/TopProgress";
 import AnalyticsBeacon from "@/components/AnalyticsBeacon";
+import CookieConsent from "@/components/CookieConsent";
 
 const bagel = Bagel_Fat_One({ weight: "400", subsets: ["latin"], variable: "--font-hero-family" });
 const unbounded = Unbounded({
@@ -64,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Header />
         {children}
         <Footer />
+        <CookieConsent />
       </body>
     </html>
   );
