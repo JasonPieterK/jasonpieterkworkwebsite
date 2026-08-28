@@ -33,6 +33,15 @@
 .paper { background: var(--paper); }
 .cream { background: var(--cream); }
 
+/* Admin mode: a button standing in for the Link, same look, no navigation. */
+.asButton {
+  width: 100%;
+  text-align: left;
+  font: inherit;
+  appearance: none;
+  cursor: pointer;
+}
+
 .banners {
   display: block;
   margin: calc(var(--s-5) * -1) calc(var(--s-5) * -1) var(--s-4);

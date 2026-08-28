@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Eye, EyeSlash, LockSimple, LockSimpleOpen } from "@phosphor-icons/react";
 import type { FileEntry } from "@/lib/types";
 import { extLabel, formatBytes, formatDate, relativeDate } from "@/lib/utils";
 import FileIcon from "./FileIcon";
@@ -6,14 +7,24 @@ import DownloadModal from "./DownloadModal";
 import StarButton from "./StarButton";
 import styles from "./FileCard.module.css";
 
+export type FileCardAdminControls = {
+  hidden: boolean;
+  locked: boolean;
+  onToggleHide: () => void;
+  onToggleLock: () => void;
+};
+
 export default function FileCard({
   file,
   index = 0,
   banner,
+  adminControls,
 }: {
   file: FileEntry;
   index?: number;
   banner?: "new" | "updated";
+  /** Only ever passed from /admin — adds Hide/Lock next to the normal actions. */
+  adminControls?: FileCardAdminControls;
 }) {
   const size = formatBytes(file.size);
 
@@ -32,6 +43,8 @@ export default function FileCard({
       <div className={styles.meta}>
         <span className={styles.chip}>{extLabel(file.name)}</span>
         {size && <span className={styles.chip}>{size}</span>}
+        {adminControls?.hidden && <span className={styles.chip}>Hidden</span>}
+        {adminControls?.locked && <span className={styles.chip}>Locked</span>}
         <span className={styles.date} title={file.lastCommitDate}>
           {file.lastCommitDate ? `${formatDate(file.lastCommitDate)} · ${relativeDate(file.lastCommitDate)}` : "—"}
         </span>
@@ -41,6 +54,22 @@ export default function FileCard({
         <a href={file.htmlUrl} target="_blank" rel="noreferrer" className={styles.viewLink}>
           View on GitHub
         </a>
+        {adminControls && (
+          <>
+            <button type="button" className={styles.adminBtn} onClick={adminControls.onToggleHide}>
+              {adminControls.hidden ? <Eye size={14} weight="bold" /> : <EyeSlash size={14} weight="bold" />}
+              {adminControls.hidden ? "Unhide" : "Hide"}
+            </button>
+            <button type="button" className={styles.adminBtn} onClick={adminControls.onToggleLock}>
+              {adminControls.locked ? (
+                <LockSimpleOpen size={14} weight="bold" />
+              ) : (
+                <LockSimple size={14} weight="bold" />
+              )}
+              {adminControls.locked ? "Unlock" : "Lock"}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );

@@ -40,17 +40,22 @@ const ICONS: Record<IconKey, PhosphorIcon> = {
   desktop: Desktop,
 };
 
-export default function SubjectCard({ subject, index }: { subject: Subject; index: number }) {
+export default function SubjectCard({
+  subject,
+  index,
+  onClick,
+}: {
+  subject: Subject;
+  index: number;
+  /** Only ever passed from /admin — swaps navigation for an in-place view change. */
+  onClick?: () => void;
+}) {
   const color = colorForIndex(index);
   const bg = cardBgForIndex(index);
   const Icon = ICONS[subjectIconKey(subject.name)];
 
-  return (
-    <Link
-      href={`/subject/${subject.slug}`}
-      className={`${styles.card} ${styles[bg]}`}
-      style={{ "--rot": rotationForIndex(index), "--i": index } as React.CSSProperties}
-    >
+  const inner = (
+    <>
       {(subject.newestAdded || subject.newestUpdated) && (
         <span className={styles.banners}>
           {subject.newestAdded && (
@@ -74,6 +79,22 @@ export default function SubjectCard({ subject, index }: { subject: Subject; inde
       <p className={styles.count}>
         {subject.fileCount} {subject.fileCount === 1 ? "file" : "files"}
       </p>
+    </>
+  );
+
+  const style = { "--rot": rotationForIndex(index), "--i": index } as React.CSSProperties;
+
+  if (onClick) {
+    return (
+      <button type="button" onClick={onClick} className={`${styles.card} ${styles[bg]} ${styles.asButton}`} style={style}>
+        {inner}
+      </button>
+    );
+  }
+
+  return (
+    <Link href={`/subject/${subject.slug}`} className={`${styles.card} ${styles[bg]}`} style={style}>
+      {inner}
     </Link>
   );
 }

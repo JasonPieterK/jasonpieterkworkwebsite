@@ -4,7 +4,7 @@ import { useDeferredValue, useMemo, useState } from "react";
 import { useHash } from "@/lib/useHash";
 import type { SemesterGroup } from "@/lib/types";
 import { SORTS, sortFiles, type SortKey } from "@/lib/sort";
-import FileCard from "./FileCard";
+import FileCard, { type FileCardAdminControls } from "./FileCard";
 import ZipButton from "./ZipButton";
 import styles from "./SemesterTabs.module.css";
 
@@ -13,9 +13,12 @@ type StatusFilter = "all" | "new" | "updated";
 export default function SemesterTabs({
   subjectSlug,
   semesters,
+  getAdminControls,
 }: {
   subjectSlug: string;
   semesters: SemesterGroup[];
+  /** Only ever passed from /admin — adds Hide/Lock to every card in this grid. */
+  getAdminControls?: (path: string) => FileCardAdminControls;
 }) {
   const [active, setActive] = useState(0);
   const [status, setStatus] = useState<StatusFilter>("all");
@@ -143,7 +146,13 @@ export default function SemesterTabs({
           key={`${current.semester}-${sort}-${status}-${deferredQuery}`}
         >
           {files.map((f, i) => (
-            <FileCard key={f.path} file={f} index={i} banner={f.badge ?? undefined} />
+            <FileCard
+              key={f.path}
+              file={f}
+              index={i}
+              banner={f.badge ?? undefined}
+              adminControls={getAdminControls?.(f.path)}
+            />
           ))}
         </div>
       )}

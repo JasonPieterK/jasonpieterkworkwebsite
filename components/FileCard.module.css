@@ -99,6 +99,24 @@
   font-size: var(--fs-small);
 }
 
+.adminBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border: var(--bw-thin) solid var(--ink);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 12px;
+  cursor: pointer;
+}
+.adminBtn:hover {
+  background: var(--median-50);
+}
+
 /* ---------- motion ---------- */
 
 @media (hover: hover) {
