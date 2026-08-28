@@ -19,7 +19,11 @@ export function setConsent(state: "accepted" | "declined"): void {
   }
 }
 
-/** Analytics only ever fires once someone has explicitly said yes. */
+/**
+ * No banner is shown anymore, so there's no way for a visitor to actively
+ * decline — analytics just runs, same as before consent tracking existed.
+ * getConsent()/setConsent() are kept in case the banner comes back later.
+ */
 export function hasConsent(): boolean {
-  return getConsent() === "accepted";
+  return getConsent() !== "declined";
 }
