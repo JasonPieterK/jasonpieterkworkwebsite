@@ -3,7 +3,9 @@ import { getSubjects } from "@/lib/github";
 import { readFileFlags, setFlag } from "@/lib/fileFlags";
 import { addPasscode, listPasscodes, removePasscode } from "@/lib/passcodes";
 import { readDownloadCounts } from "@/lib/downloadCounts";
-import { getAnalyticsSummary } from "@/lib/analytics";
+import { getAnalyticsSummary, type TimeRange } from "@/lib/analytics";
+
+const VALID_RANGES: TimeRange[] = ["1d", "7d", "30d", "all"];
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin";
 const CODE_RE = /^\d{6}$/;
@@ -32,7 +34,9 @@ export async function GET(req: NextRequest) {
   }
 
   if (action === "analytics") {
-    return NextResponse.json(await getAnalyticsSummary());
+    const rangeParam = req.nextUrl.searchParams.get("range") ?? "30d";
+    const range = VALID_RANGES.includes(rangeParam as TimeRange) ? (rangeParam as TimeRange) : "30d";
+    return NextResponse.json(await getAnalyticsSummary(range));
   }
 
   return NextResponse.json({ error: "Invalid action" }, { status: 400 });

@@ -3,8 +3,18 @@ import { logEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   try {
-    const { path, device, browser, os } = await req.json();
-    await logEvent({ kind: "visit", key: typeof path === "string" ? path.slice(0, 300) : undefined, device, browser, os });
+    const { path, device, browser, os, deviceModel, screen, language, userAgent } = await req.json();
+    await logEvent({
+      kind: "visit",
+      key: typeof path === "string" ? path.slice(0, 300) : undefined,
+      device,
+      browser,
+      os,
+      deviceModel,
+      screen,
+      language,
+      userAgent,
+    });
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ success: false });

@@ -4,14 +4,14 @@ import { logEvent } from "@/lib/analytics";
 
 export async function POST(req: NextRequest) {
   try {
-    const { key, device, browser, os } = await req.json();
+    const { key, device, browser, os, deviceModel, screen, language, userAgent } = await req.json();
     if (!key || typeof key !== "string") {
       return NextResponse.json({ error: "key required" }, { status: 400 });
     }
     const safeKey = key.slice(0, 500);
     await Promise.all([
       incrementDownload(safeKey),
-      logEvent({ kind: "download", key: safeKey, device, browser, os }),
+      logEvent({ kind: "download", key: safeKey, device, browser, os, deviceModel, screen, language, userAgent }),
     ]);
     return NextResponse.json({ success: true });
   } catch {

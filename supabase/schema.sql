@@ -39,10 +39,21 @@ create table if not exists analytics_events (
   key text,                  -- file path for downloads, page path for visits
   device text,                -- 'mobile' | 'tablet' | 'desktop'
   browser text,
-  os text
+  os text,
+  device_model text,         -- best-effort, e.g. "iPhone", "SM-G991B"
+  screen text,                -- "1920x1080"
+  language text,               -- navigator.language, e.g. "en-US"
+  user_agent text
 );
 create index if not exists analytics_events_created_at_idx on analytics_events (created_at desc);
 create index if not exists analytics_events_kind_idx on analytics_events (kind);
+
+-- Adds the new columns to a table created by an earlier version of this
+-- schema without touching existing rows.
+alter table analytics_events add column if not exists device_model text;
+alter table analytics_events add column if not exists screen text;
+alter table analytics_events add column if not exists language text;
+alter table analytics_events add column if not exists user_agent text;
 
 -- The app only holds the publishable (anon) key — every admin write already
 -- goes through /api/admin, which checks ADMIN_PASSWORD before it ever touches
