@@ -91,6 +91,7 @@ export default function AdminSettings({
             value={code}
             onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
             placeholder="123456"
+            aria-label="New 6-digit passcode"
             className={`mmm-input ${styles.codeInput}`}
           />
           <input
@@ -98,6 +99,7 @@ export default function AdminSettings({
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder="Label (optional) — e.g. Class A"
+            aria-label="Passcode label (optional)"
             className={`mmm-input ${styles.labelInput}`}
           />
           <button type="submit" className="mmm-btn mmm-btn--mode" disabled={loading || !isValid}>

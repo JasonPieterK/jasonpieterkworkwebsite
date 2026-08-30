@@ -59,6 +59,7 @@ export default function SearchBar() {
       <input
         className={`mmm-input ${styles.input}`}
         type="search"
+        aria-label="Search files or subjects"
         placeholder="Search files or subjects…"
         value={value}
         onChange={(e) => onChange(e.target.value)}
